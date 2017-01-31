@@ -89,7 +89,7 @@ namespace Cloey.Plugins.Heroes
             if (ComboKeyDown)
             {
                 DoArrow();
-                //DoStarfall();
+                DoStarfall();
                 return;
             }
 
@@ -99,134 +99,6 @@ namespace Cloey.Plugins.Heroes
                 Killsteal();
             }
         }
-
-        #region Tidy: DoWalljump
-        internal void TryWallJump()
-        {
-            if (Me.CanMove())
-            {
-                var cursorPos = Game.MousePosition;
-
-                var wallPoint = MathUtils.GetFirstWallPoint(Me.Position, cursorPos);
-                if (wallPoint != default(Vector2))
-                {
-                    wallPoint = MathUtils.GetFirstWallPoint(wallPoint.To3D(), cursorPos, 5);  // more precision
-                }
-
-                var moveSpot = wallPoint != default(Vector2) ? wallPoint.To3D() : Game.MousePosition;
-                if (wallPoint != default(Vector2))
-                {
-                    int minimumInputs = 2;
-                    bool leapTriggered = false;
-
-                    var wallPosition = moveSpot;
-                    var dir2D = (cursorPos.To2D() - wallPosition.To2D()).Normalized();
-
-                    var angle = 80f;
-                    var step = angle / 20;
-                    var curStep = 0f;
-                    var curAngle = 0f;
-                    var minWallWidth = 175f;
-                    var jumpRange = new[] { 600, 700, 800, 900 } [Math.Min(0, MiranaLeap.Level - 1)];
-
-                    while (true)
-                    {
-                        if (curStep > angle && curAngle < 0)
-                        {
-                            break;
-                        }
-
-                        if (curAngle == 0 || curAngle < 0)
-                        {
-                            if (curStep != 0)
-                            {
-                                curAngle = (curStep) * (float) Math.PI / 180;
-                                curStep += step;
-                            }
-                            else if (curAngle > 0)
-                            {
-                                curAngle = -curAngle;
-                            }
-                        }
-                        else if (curAngle > 0)
-                        {
-                            curAngle = -curAngle;
-                        }
-
-                        Vector3 checkPoint;
-
-                        if (curStep == 0)
-                        {
-                            curStep = step;
-                            checkPoint = wallPosition + dir2D.To3D() * jumpRange; 
-                        }
-                        else
-                        {
-                            checkPoint = wallPosition + dir2D.Rotated(curAngle).To3D() * jumpRange;
-                        }
-
-                        if (NavMesh.GetCellFlags(checkPoint).HasFlag(NavMeshCellFlags.Walkable))
-                        {
-                            wallPoint = MathUtils.GetFirstWallPoint(checkPoint, wallPosition, 15);
-
-                            if (wallPoint == default(Vector2))
-                            {
-                                continue;
-                            }
-
-                            var wallPointOpposite =
-                                MathUtils.GetFirstWallPoint(wallPoint.To3D(), wallPosition, 5).To3D();
-
-                            var predictedRoute = Me.PredictRoute(1000, wallPointOpposite).ToList().To2D();
-                            if (predictedRoute.PathLength() - Me.Position.Dist(wallPointOpposite) > minWallWidth + Me.HullRadius)
-                            {
-                                if (Me.Position.Dist(wallPointOpposite) < jumpRange - Me.HullRadius / 2)
-                                {
-                                    Me.Move(wallPosition);
-                                    Inputs[Game.GameTime] = Me.Rotation;
-
-                                    var to = Me.InFront(200);
-                                    var proj = wallPointOpposite.To2D().Intersects(to.To2D(), cursorPos.To2D());
-
-                                    if (proj.IsInside && to.Dist(cursorPos) < Me.Position.Dist(cursorPos))
-                                    {
-                                        if (MiranaLeap.CanBeCasted())
-                                        {
-                                            Inputs.Clear();
-                                            MiranaLeap.UseAbility();
-                                            leapTriggered = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (!leapTriggered && Menu.Item("orbwalkwj").GetValue<bool>())
-                    {
-                        if (Utils.SleepCheck("Move2"))
-                        {
-                            Me.Move(Game.MousePosition);
-                            Inputs[Game.GameTime] = Me.Rotation;
-                            Utils.Sleep(100, "Move2");
-                        }
-                    }
-                }
-                else if (Menu.Item("orbwalkwj").GetValue<bool>())
-                {
-                    if (Utils.SleepCheck("Move3"))
-                    {
-                        Me.Move(Game.MousePosition);
-                        Inputs[Game.GameTime] = Me.Rotation;
-                        Utils.Sleep(100, "Move3");
-                    }
-                }
-
-            }
-        }
-
-        #endregion
 
         #region Tidy: DoLeap
 
@@ -328,6 +200,137 @@ namespace Cloey.Plugins.Heroes
         }
 
         #endregion
+
+
+        #region Tidy: DoWalljump
+        internal void TryWallJump()
+        {
+            // todo: improve & use rotation
+            if (Me.CanMove())
+            {
+                var cursorPos = Game.MousePosition;
+
+                var wallPoint = MathUtils.GetFirstWallPoint(Me.Position, cursorPos);
+                if (wallPoint != default(Vector2))
+                {
+                    wallPoint = MathUtils.GetFirstWallPoint(wallPoint.To3D(), cursorPos, 5);  // more precision
+                }
+
+                var moveSpot = wallPoint != default(Vector2) ? wallPoint.To3D() : Game.MousePosition;
+                if (wallPoint != default(Vector2))
+                {
+                    int minimumInputs = 2;
+                    bool leapTriggered = false;
+
+                    var wallPosition = moveSpot;
+                    var dir2D = (cursorPos.To2D() - wallPosition.To2D()).Normalized();
+
+                    var angle = 80f;
+                    var step = angle / 20;
+                    var curStep = 0f;
+                    var curAngle = 0f;
+                    var minWallWidth = 175f;
+                    var jumpRange = new[] { 600, 700, 800, 900 } [Math.Min(0, MiranaLeap.Level - 1)];
+
+                    while (true)
+                    {
+                        if (curStep > angle && curAngle < 0)
+                        {
+                            break;
+                        }
+
+                        if (curAngle == 0 || curAngle < 0)
+                        {
+                            if (curStep != 0)
+                            {
+                                curAngle = (curStep) * (float) Math.PI / 180;
+                                curStep += step;
+                            }
+                            else if (curAngle > 0)
+                            {
+                                curAngle = -curAngle;
+                            }
+                        }
+                        else if (curAngle > 0)
+                        {
+                            curAngle = -curAngle;
+                        }
+
+                        Vector3 checkPoint;
+
+                        if (curStep == 0)
+                        {
+                            curStep = step;
+                            checkPoint = wallPosition + dir2D.To3D() * jumpRange;
+                        }
+                        else
+                        {
+                            checkPoint = wallPosition + dir2D.Rotated(curAngle).To3D() * jumpRange;
+                        }
+
+                        if (NavMesh.GetCellFlags(checkPoint).HasFlag(NavMeshCellFlags.Walkable))
+                        {
+                            wallPoint = MathUtils.GetFirstWallPoint(checkPoint, wallPosition, 15);
+
+                            if (wallPoint == default(Vector2))
+                            {
+                                continue;
+                            }
+
+                            var wallPointOpposite =
+                                MathUtils.GetFirstWallPoint(wallPoint.To3D(), wallPosition, 5).To3D();
+
+                            var predictedRoute = Me.PredictRoute(1000, wallPointOpposite).ToList().To2D();
+                            if (predictedRoute.PathLength() - Me.Position.Dist(wallPointOpposite) > minWallWidth + Me.HullRadius)
+                            {
+                                if (Me.Position.Dist(wallPointOpposite) < jumpRange - Me.HullRadius / 2)
+                                {
+                                    Me.Move(wallPosition);
+                                    Inputs[Game.GameTime] = Me.Rotation;
+
+                                    var to = Me.InFront(200);
+                                    var proj = wallPointOpposite.To2D().Intersects(to.To2D(), cursorPos.To2D());
+
+                                    if (proj.IsInside && to.Dist(cursorPos) < Me.Position.Dist(cursorPos))
+                                    {
+                                        if (MiranaLeap.CanBeCasted())
+                                        {
+                                            Inputs.Clear();
+                                            MiranaLeap.UseAbility();
+                                            leapTriggered = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (!leapTriggered && Menu.Item("orbwalkwj").GetValue<bool>())
+                    {
+                        if (Utils.SleepCheck("Move2"))
+                        {
+                            Me.Move(Game.MousePosition);
+                            Inputs[Game.GameTime] = Me.Rotation;
+                            Utils.Sleep(100, "Move2");
+                        }
+                    }
+                }
+                else if (Menu.Item("orbwalkwj").GetValue<bool>())
+                {
+                    if (Utils.SleepCheck("Move3"))
+                    {
+                        Me.Move(Game.MousePosition);
+                        Inputs[Game.GameTime] = Me.Rotation;
+                        Utils.Sleep(100, "Move3");
+                    }
+                }
+
+            }
+        }
+
+        #endregion
+
 
         #region Tidy: Misc Methods
 

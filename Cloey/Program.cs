@@ -62,7 +62,6 @@ namespace Cloey
             RootMenu?.RemoveFromMainMenu();
         }
 
-
         private static void NewPlugin(Plugin plugin, Menu parent)
         {
             try
@@ -73,10 +72,7 @@ namespace Cloey
                 }
 
                 if (LoadedPlugins.Contains(plugin) == false)
-                {
                     LoadedPlugins.Add(plugin.Init(parent));
-                    Game.PrintMessage("added");
-                }
             }
 
             catch (Exception e)

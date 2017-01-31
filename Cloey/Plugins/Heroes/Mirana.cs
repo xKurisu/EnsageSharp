@@ -206,7 +206,6 @@ namespace Cloey.Plugins.Heroes
 
         #endregion
 
-
         #region Tidy: DoWalljump
         internal void TryWallJump()
         {
@@ -294,9 +293,9 @@ namespace Cloey.Plugins.Heroes
                                     Inputs[Game.GameTime] = Me.Rotation;
 
                                     var to = Me.InFront(200);
-                                    var proj = wallPointOpposite.To2D().Intersects(to.To2D(), cursorPos.To2D());
 
-                                    if (proj.IsInside && to.Dist(cursorPos) < Me.Position.Dist(cursorPos))
+                                    var segment = wallPointOpposite.To2D().Intersects(to.To2D(), cursorPos.To2D());
+                                    if (segment.IsInside && to.Dist(cursorPos) < Me.Position.Dist(cursorPos))
                                     {
                                         if (MiranaLeap.CanBeCasted())
                                         {
@@ -330,12 +329,10 @@ namespace Cloey.Plugins.Heroes
                         Utils.Sleep(100, "Move3");
                     }
                 }
-
             }
         }
 
         #endregion
-
 
         #region Tidy: Misc Methods
 
@@ -378,7 +375,7 @@ namespace Cloey.Plugins.Heroes
                         var distToHero = Me.NetworkPosition.Dist(hero.NetworkPosition);
                         var distTime = (550 + Game.Ping) + (1000 * (Me.NetworkPosition.Dist(hero.NetworkPosition) / speed));
 
-                        if (Menu.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox")
+                        if (Menu.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox" && !hero.IsImmobile())
                         {
                             var zpredPosition = ZPrediction.PredictPosition(hero, (int) distTime, distToHero > 1800);
                             if (zpredPosition != default(Vector3))

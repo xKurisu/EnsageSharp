@@ -58,7 +58,7 @@ namespace Cloey.Interfaces
 
         private void Events_OnClose(object sender, EventArgs e)
         {
-
+            OnClose();
         }
 
         private void Drawing_OnDraw(EventArgs args)
@@ -101,6 +101,11 @@ namespace Cloey.Interfaces
         }
 
         public virtual void SetupSpells()
+        {
+            
+        }
+
+        public virtual void OnClose()
         {
             
         }

@@ -80,9 +80,8 @@
             Menu.AddItem(new MenuItem("farmKey", "Farm Key").SetValue(new KeyBind('B', KeyBindType.Press)));
             Menu.AddItem(new MenuItem("bonusWindup", "Bonus WindUp time on kitting").SetValue(new Slider(500, 100, 2000)).SetTooltip("Time between attacks in kitting mode"));
 
-            Orbwalking.Load();
-            Events.OnLoad += Events_OnLoad;
-            Events.OnClose += Events_OnClose;
+            OnLoad();
+
         }
 
         #endregion
@@ -98,7 +97,7 @@
         /// <param name="e">
         ///     The e.
         /// </param>
-        private void Events_OnClose(object sender, EventArgs e)
+        public override void OnClose()
         {
             Events.OnUpdate -= Game_OnUpdate;
             target = null;
@@ -114,7 +113,7 @@
         /// <param name="e">
         ///     The e.
         /// </param>
-        private void Events_OnLoad(object sender, EventArgs e)
+        private void OnLoad()
         {
             me = ObjectManager.LocalHero;
             controllableUnits = new ControllableUnits(me.Team);

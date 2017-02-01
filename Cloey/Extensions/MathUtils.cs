@@ -8,13 +8,13 @@ namespace Cloey.Extensions
 {
     public struct Segment
     {
-        public bool IsInside;
+        public bool IsOnSegment;
         public Vector2 LinePoint;
         public Vector2 SegmentPoint;
 
-        internal Segment(bool isInside, Vector2 segmentPoint, Vector2 linePoint)
+        internal Segment(bool isOnSegment, Vector2 segmentPoint, Vector2 linePoint)
         {
-            IsInside = isInside;
+            IsOnSegment = isOnSegment;
             SegmentPoint = segmentPoint;
             LinePoint = linePoint;
         }
@@ -86,7 +86,7 @@ namespace Cloey.Extensions
             return new Vector2((float) (v.X * num1 - v.Y * num2), (float) (v.Y * num1 + v.X * num2));
         }
 
-        public static Segment Intersects(this Vector2 point, Vector2 segmentStart, Vector2 segmentEnd)
+        public static Segment ProjectsOn(this Vector2 point, Vector2 segmentStart, Vector2 segmentEnd)
         {
             double x1 = point.X;
             float y1 = point.Y;
@@ -128,10 +128,10 @@ namespace Cloey.Extensions
                 .Where(b => b.Team != me.Team && b.IsValidUnit())
                 .Where(unit => ObjectManager.LocalHero.NetworkPosition.Dist(unit.Position) <= range)
                 .Where(unit => !heroOnly || unit is Hero)
-                .Select(unit => new {unit, seg = unit.Position.To2D().Intersects(start, endposition)})
-                .Select(t => new {t, segdist = t.unit.Position.To2D().Dist(t.seg.SegmentPoint)})
-                .Where(t => t.t.unit.HullRadius + 35 + width > t.segdist && t.t.seg.IsInside)
-                .Select(t => t.t.unit);
+                .Select(unit => new {unit, seg = unit.Position.To2D().ProjectsOn(start, endposition)})
+                .Select(x => new {t = x, segdist = x.unit.Position.To2D().Dist(x.seg.SegmentPoint)})
+                .Where(x => x.t.unit.HullRadius + 35 + width > x.segdist && x.t.seg.IsOnSegment)
+                .Select(x => x.t.unit);
 
             units = objinpath.ToList();
             return units.Count;

@@ -117,8 +117,8 @@ namespace Cloey.Plugins.Heroes
 
                     var to = Me.InFront(jumpRange);
 
-                    var proj = to.To2D().Intersects(Me.Position.To2D(), Game.MousePosition.To2D());
-                    if (proj.IsInside && Inputs.Count > 2)
+                    var proj = to.To2D().ProjectsOn(Me.Position.To2D(), Game.MousePosition.To2D());
+                    if (proj.IsOnSegment && Inputs.Count > 2)
                     {
                         if (MiranaLeap.CanBeCasted() && Inputs.Values.Last() - Me.Rotation < 25f)
                         {
@@ -281,8 +281,7 @@ namespace Cloey.Plugins.Heroes
                                 continue;
                             }
 
-                            var wallPointOpposite =
-                                MathUtils.GetFirstWallPoint(wallPoint.To3D(), wallPosition, 5).To3D();
+                            var wallPointOpposite = MathUtils.GetFirstWallPoint(wallPoint.To3D(), wallPosition, 5).To3D();
 
                             var predictedRoute = Me.PredictRoute(1000, wallPointOpposite).ToList().To2D();
                             if (predictedRoute.PathLength() - Me.Position.Dist(wallPointOpposite) > minWallWidth + Me.HullRadius)
@@ -294,8 +293,8 @@ namespace Cloey.Plugins.Heroes
 
                                     var to = Me.InFront(200);
 
-                                    var segment = wallPointOpposite.To2D().Intersects(to.To2D(), cursorPos.To2D());
-                                    if (segment.IsInside && to.Dist(cursorPos) < Me.Position.Dist(cursorPos))
+                                    var proj = wallPointOpposite.To2D().ProjectsOn(to.To2D(), cursorPos.To2D());
+                                    if (proj.IsOnSegment && to.Dist(cursorPos) < Me.Position.Dist(cursorPos))
                                     {
                                         if (MiranaLeap.CanBeCasted())
                                         {

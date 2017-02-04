@@ -12,6 +12,7 @@ namespace Cloey.Interfaces
 
         public virtual string PluginName { get; set; }
         public virtual string TextureName { get; set; }
+        public virtual bool CheckHero { get; set; } = true;
         public virtual ClassID ClassId { get; set; }
 
         #endregion
@@ -33,18 +34,22 @@ namespace Cloey.Interfaces
         {
             try
             {
-                Root = root;
-                Menu = new Menu(PluginName, PluginName + "root");
+                var selectedOrbwalker = root.Item("orbwalkmode").GetValue<StringList>().SelectedValue;
+                if (selectedOrbwalker.ToLower() == TextureName.ToLower() || CheckHero)
+                {
+                    Root = root;
+                    Menu = new Menu(PluginName, TextureName + "root");
 
-                // todo:
+                    // todo:
 
-                SetupSpells();
-                OnLoadPlugin();
-                root.AddSubMenu(Menu);
+                    SetupSpells();
+                    OnLoadPlugin();
+                    root.AddSubMenu(Menu);
 
-                Events.OnClose += Events_OnClose;
-                Game.OnIngameUpdate += Game_OnUpdate;
-                Drawing.OnDraw += Drawing_OnDraw;
+                    Events.OnClose += Events_OnClose;
+                    Game.OnIngameUpdate += Game_OnUpdate;
+                    Drawing.OnDraw += Drawing_OnDraw;
+                }
             }
 
             catch (Exception e)

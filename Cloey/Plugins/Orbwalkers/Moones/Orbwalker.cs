@@ -9,8 +9,6 @@
     using Ensage.Common.Extensions;
     using Ensage.Common.Extensions.SharpDX;
     using Ensage.Common.Menu;
-    using Ensage.Common.Objects;
-
     using Cloey.Interfaces;
 
     using orb = Ensage.Common.Objects.UtilityObjects.Orbwalker;
@@ -23,8 +21,9 @@
         #region Virtual Fields
 
         public override string PluginName => "Orbwalker";
-        public override string TextureName => "orbwalker";
+        public override string TextureName => "moones";
         public override ClassID ClassId => ObjectManager.LocalHero.ClassID;
+        public override bool CheckHero => false;
 
         #endregion
 
@@ -69,11 +68,6 @@
         /// </summary>
         public override void OnLoadPlugin()
         {
-            if (Root.Item("orbwalkmode").GetValue<StringList>().SelectedIndex != 0)
-            {
-                return;
-            }
-
             Menu.AddItem(new MenuItem("chaseKey", "Chase Key").SetValue(new KeyBind(32, KeyBindType.Press)));
             Menu.AddItem( new MenuItem("allUnitsChaseKey", "All units Key").SetValue(new KeyBind('N', KeyBindType.Press)));
             Menu.AddItem(new MenuItem("kiteKey", "Kite Key").SetValue(new KeyBind('V', KeyBindType.Press)));
@@ -81,7 +75,6 @@
             Menu.AddItem(new MenuItem("bonusWindup", "Bonus WindUp time on kitting").SetValue(new Slider(500, 100, 2000)).SetTooltip("Time between attacks in kitting mode"));
 
             OnLoad();
-
         }
 
         #endregion

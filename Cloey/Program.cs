@@ -32,13 +32,13 @@ namespace Cloey
             var amenu = new Menu("Main", "utils");
             amenu.AddItem(new MenuItem("ticklimiter", "Tick Limiter")).SetValue(new Slider(250, 0, 1000)).SetTooltip("Limit OnUpdate");
             amenu.AddItem(new MenuItem("orbwalkmode", "Orbwalker: "))
-                    .SetValue(new StringList(new[] {"Moones"}))
-                    .ValueChanged +=
-                (o, args) =>
+                    .SetValue(new StringList(new[] {"Moones"} ))
+                    .ValueChanged += (o, args) =>
                 {
-                    RootMenu.Item("f5check")
-                        .Show(args.GetNewValue<StringList>().SelectedIndex == 0 &&
-                              RootMenu.Children.All(x => x.Name != "Orbwalkerroot"));
+                    var mLoaded = args.GetNewValue<StringList>().SelectedIndex == 0 && RootMenu.Children.All(x => x.Name != "moonesroot");
+                    var kLoaded = args.GetNewValue<StringList>().SelectedIndex == 1 && RootMenu.Children.All(x => x.Name != "zynoxroot");
+
+                    RootMenu.Item("f5check").Show(mLoaded || kLoaded);
                 };
 
             amenu.AddItem(new MenuItem("f5check", "Orbwalker not Loaded Please F5!"))

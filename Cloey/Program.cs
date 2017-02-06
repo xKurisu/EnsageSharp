@@ -63,7 +63,16 @@ namespace Cloey
             if (switcherItem.GetValue<StringList>().SelectedIndex != 1)
             {
                 amenu.AddItem(targetingItem).SetValue(new StringList(new[] { "Mouse", "Quickest Kill" }, 1));
-                amenu.AddItem(orbwalkerItem).SetValue(new StringList(new[] { "Moones" }));
+                amenu.AddItem(orbwalkerItem).SetValue(new StringList(new[] { "Moones", "None" }));
+
+                orbwalkerItem.ValueChanged += (o, args) =>
+                {
+                    var mLoaded = args.GetNewValue<StringList>().SelectedIndex == 1 &&
+                                  RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
+
+                    RootMenu.Item("f5check").Show(mLoaded);
+                };
+
                 amenu.AddItem(predictionItem).SetValue(new StringList(new[] { "Common", "Zynox" }));
                 amenu.AddItem(predictionRangeItem).SetValue(new Slider(1800, 1000, 3000));
             }
@@ -74,7 +83,9 @@ namespace Cloey
             if (switcherItem.GetValue<StringList>().SelectedIndex != 1)
             {
                 GetTypesByGroup("Plugins.Heroes").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
-                GetTypesByGroup("Plugins.Orbwalkers").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
+
+                if (orbwalkerItem.GetValue<StringList>().SelectedIndex != 1)
+                    GetTypesByGroup("Plugins.Orbwalkers").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
             }
 
             var imenu = new Menu("Utility", "imenu");

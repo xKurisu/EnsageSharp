@@ -30,10 +30,12 @@ namespace Cloey.Interfaces
 
         private int _limiter;
 
+        // todo: redo initializer
         public Plugin Init(Menu root)
         {
             try
             {
+
                 if (IsHeroPlugin)
                 {
                     Root = root;

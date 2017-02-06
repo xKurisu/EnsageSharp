@@ -50,7 +50,7 @@ namespace Cloey.Plugins.Heroes
             cmenu.AddItem(new MenuItem("combokey", "Combo [active]")).SetValue(new KeyBind(32, KeyBindType.Press));
             Menu.AddSubMenu(cmenu);
 
-            var mmenu = new Menu("Harass", "mmenu");
+            var mmenu = new Menu("Mixed", "mmenu");
             mmenu.AddItem(new MenuItem("togglermixed", "Supported Spells: ")).SetFontColor(Color.LimeGreen)
                 .SetValue(new AbilityToggler(MixedSpells.ToDictionary(x => x, x => true)));
             mmenu.AddItem(new MenuItem("mixedmana", "Minimum Mana % to Use Harass")).SetValue(new Slider(55));

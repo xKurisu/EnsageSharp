@@ -47,7 +47,7 @@ namespace Cloey
                     predictionRangeItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
 
                     var mLoaded = args.GetNewValue<StringList>().SelectedIndex == 1 &&
-                                  RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
+                                  RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot" || x.Name ==  x.TextureName + "main");
                     var kLoaded = args.GetNewValue<StringList>().SelectedIndex == 0 && 
                                  !RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
 

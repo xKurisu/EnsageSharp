@@ -39,7 +39,7 @@ namespace Cloey.Interfaces
                 if (IsHeroPlugin)
                 {
                     Root = root;
-                    Menu = new Menu(PluginName, TextureName + "root");
+                    Menu = new Menu(PluginName, TextureName + "main");
 
                     // todo:
 

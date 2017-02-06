@@ -21,42 +21,44 @@ namespace Cloey.Plugins.Heroes
         public override string PluginName => "Mirana";
         public override string TextureName => "mirana";
         public override ClassID ClassId => ClassID.CDOTA_Unit_Hero_Mirana;
+        public override bool IsHeroPlugin => true;
 
         internal static Ability MiranaArrow;
         internal static Ability MiranaLeap;
         internal static Ability MiranaStars;
 
         internal static Dictionary<float, float> Inputs = new Dictionary<float, float>();
-        internal static string[] ComboSpells = { "mirana_arrow", "mirana_starfall" };
+
+        internal static string[] MixedSpells = { "mirana_arrow", "mirana_starfall" };
+        internal static string[] ComboSpells = { "mirana_arrow", "mirana_starfall", /*"mirana_leap"*/ };
         internal static string[] FleeSpells = { "mirana_leap" };
 
-        public bool ComboKeyDown => Menu != null && Menu.Item("combokey").GetValue<KeyBind>().Active;
-        public bool FleeKeyDown => Menu != null && Menu.Item("fleekey").GetValue<KeyBind>().Active;
-        public bool JumpKeyDown => Menu != null && Menu.Item("walljumpkey").GetValue<KeyBind>().Active;
+        public bool MixedKeyDown => Menu?.Item("mixedkey").GetValue<KeyBind>().Active == true;
+        public bool ComboKeyDown => Menu?.Item("combokey").GetValue<KeyBind>().Active == true;
+        public bool FleeKeyDown => Menu?.Item("fleekey").GetValue<KeyBind>().Active == true;
+        public bool JumpKeyDown => Menu?.Item("walljumpkey").GetValue<KeyBind>().Active == true;
 
         public override void OnLoadPlugin()
         {
-            var tmenu = new Menu("Targeting", "tmenu");
-            tmenu.AddItem(new MenuItem("targeting", "Mode:"))
-                .SetValue(new StringList(new[] { "Mouse", "FastestKill" }, 1));
-            Menu.AddSubMenu(tmenu);
-
-            var pmenu = new Menu("Prediction", "prediction");
-            pmenu.AddItem(new MenuItem("prediction", "Prediction: ")).SetValue(new StringList(new[] {"Common", "Zynox"}));
-            pmenu.AddItem(new MenuItem("predictionrange", "Max Range: ")).SetValue(new Slider(1800, 1000, 3000));
-            Menu.AddSubMenu(pmenu);
-
             var cmenu = new Menu("Combo", "cmenu");
-            cmenu.AddItem(new MenuItem("toggler", "Supported Spells: "))
+            cmenu.AddItem(new MenuItem("togglercombo", "Supported Spells: ")).SetFontColor(Color.LimeGreen)
                 .SetValue(new AbilityToggler(ComboSpells.ToDictionary(x => x, x => true)));
-            cmenu.AddItem(new MenuItem("chaincc", "Auto Chain CC")).SetValue(true).SetFontColor(Color.Fuchsia);
-            cmenu.AddItem(new MenuItem("killsteal", "Auto Killsteal")).SetValue(true).SetFontColor(Color.Fuchsia);
-            cmenu.AddItem(new MenuItem("blockks", "Block Killsteal in Combo")).SetValue(false);
+            cmenu.AddItem(new MenuItem("chaincc", "Auto Chain CC")).SetValue(true).SetFontColor(Color.Orange);
+            cmenu.AddItem(new MenuItem("killsteal", "Auto Cast if Lethal")).SetValue(true).SetFontColor(Color.Orange);
+            cmenu.AddItem(new MenuItem("blockks", "Block Auto Cast in Combo")).SetValue(false);
+            cmenu.AddItem(new MenuItem("combomana", "Minimum Mana % to Use Combo")).SetValue(new Slider(15));
             cmenu.AddItem(new MenuItem("combokey", "Combo [active]")).SetValue(new KeyBind(32, KeyBindType.Press));
             Menu.AddSubMenu(cmenu);
 
+            var mmenu = new Menu("Harass", "mmenu");
+            mmenu.AddItem(new MenuItem("togglermixed", "Supported Spells: ")).SetFontColor(Color.LimeGreen)
+                .SetValue(new AbilityToggler(MixedSpells.ToDictionary(x => x, x => true)));
+            mmenu.AddItem(new MenuItem("mixedmana", "Minimum Mana % to Use Harass")).SetValue(new Slider(55));
+            mmenu.AddItem(new MenuItem("mixedkey", "Mixed [active]")).SetValue(new KeyBind(32, KeyBindType.Press));
+            Menu.AddSubMenu(mmenu);
+
             var fmenu = new Menu("Flee", "fmenu");
-            fmenu.AddItem(new MenuItem("toggler2", "Leaping is still in Beta: ")).SetFontColor(Color.Fuchsia)
+            fmenu.AddItem(new MenuItem("togglerflee", "Leaping is still in Beta: ")).SetFontColor(Color.Red)
                 .SetValue(new AbilityToggler(FleeSpells.ToDictionary(x => x, x => true)));
 
             fmenu.AddItem(new MenuItem("orbwalkwj", "Orbwalk with Walljump")).SetValue(true);
@@ -87,10 +89,23 @@ namespace Cloey.Plugins.Heroes
                 return;
             }
 
+            if (MixedKeyDown)
+            {
+                if (Me.Mana / Me.MaximumMana * 100 >= Menu.Item("mixedmana").GetValue<Slider>().Value)
+                {
+                    DoArrow();
+                    DoStarfall();
+                }
+            }
+
             if (ComboKeyDown)
             {
-                DoArrow();
-                DoStarfall();
+                if (Me.Mana / Me.MaximumMana * 100 >= Menu.Item("combomana").GetValue<Slider>().Value)
+                {
+                    DoArrow();
+                    ComboLeap();
+                    DoStarfall();
+                }
 
                 if (Menu.Item("blockks").GetValue<bool>())
                 {
@@ -111,7 +126,7 @@ namespace Cloey.Plugins.Heroes
         {
             if (Me.CanMove())
             {
-                if (Menu.Item("toggler2").GetValue<AbilityToggler>().IsEnabled("mirana_leap"))
+                if (Menu.Item("togglerflee").GetValue<AbilityToggler>().IsEnabled("mirana_leap"))
                 {
                     var jumpRange = new[] { 600, 700, 800, 900 } [Math.Min(0, MiranaLeap.Level - 1)];
 
@@ -142,16 +157,21 @@ namespace Cloey.Plugins.Heroes
             }
         }
 
+        internal void ComboLeap()
+        {
+
+        }
+
         #endregion
 
         #region Tidy: DoArrow
 
         internal void DoArrow()
         {
-            var target = Me.GetTarget(1000 + Menu.Item("predictionrange").GetValue<Slider>().Value / 2, Menu);
-            if (MiranaArrow.CanBeCasted() && Menu.Item("toggler").GetValue<AbilityToggler>().IsEnabled("mirana_arrow"))
+            var target = Me.GetTarget(1000 + Menu.Parent.Item("predictionrange").GetValue<Slider>().Value / 2, Menu);
+            if (MiranaArrow.CanBeCasted() && Menu.Item("togglercombo").GetValue<AbilityToggler>().IsEnabled("mirana_arrow"))
             {   
-                if (target.IsValidUnit(Menu.Item("predictionrange").GetValue<Slider>().Value))
+                if (target.IsValidUnit(Menu.Parent.Item("predictionrange").GetValue<Slider>().Value))
                 {
                     var speed = MiranaArrow.GetAbilityData("arrow_speed");
                     var radius = MiranaArrow.GetAbilityData("arrow_width") + 35;
@@ -159,7 +179,7 @@ namespace Cloey.Plugins.Heroes
                     var distToHero = Me.NetworkPosition.Dist(target.NetworkPosition);
                     var distTime = (550 + Game.Ping) + (1000 * (Me.NetworkPosition.Dist(target.NetworkPosition) / speed));
 
-                    if (Menu.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox" && !target.IsImmobile())
+                    if (Menu.Parent.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox" && !target.IsImmobile())
                     {
                         var zpredPosition = ZPrediction.PredictPosition(target, (int) distTime, distToHero > 1800);
                         if (zpredPosition != default(Vector3))
@@ -194,7 +214,7 @@ namespace Cloey.Plugins.Heroes
         internal void DoStarfall()
         {
             var target = Me.GetTarget(650, Menu);
-            if (MiranaStars.CanBeCasted() && Menu.Item("toggler").GetValue<AbilityToggler>().IsEnabled("mirana_starfall"))
+            if (MiranaStars.CanBeCasted() && Menu.Item("togglercombo").GetValue<AbilityToggler>().IsEnabled("mirana_starfall"))
             {
                 if (target.IsValidUnit(425) && Utils.SleepCheck("StarfallCombo"))
                 {
@@ -274,7 +294,7 @@ namespace Cloey.Plugins.Heroes
 
                         if (NavMesh.GetCellFlags(checkPoint).HasFlag(NavMeshCellFlags.Walkable))
                         {
-                            wallPoint = MathUtils.GetFirstWallPoint(checkPoint, wallPosition, 15);
+                            wallPoint = MathUtils.GetFirstWallPoint(checkPoint, wallPosition, 5);
 
                             if (wallPoint == default(Vector2))
                             {
@@ -339,7 +359,7 @@ namespace Cloey.Plugins.Heroes
         {
             if (MiranaArrow.CanBeCasted() && Menu.Item("chaincc").GetValue<bool>() && Utils.SleepCheck("MiranaAutoW"))
             {
-                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Menu.Item("predictionrange").GetValue<Slider>().Value)))
+                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Menu.Parent.Item("predictionrange").GetValue<Slider>().Value)))
                 {
                     if (hero.IsValidUnit() && hero.IsImmobile() && hero.Team != Me.Team)
                     {
@@ -359,7 +379,7 @@ namespace Cloey.Plugins.Heroes
         {
             if (MiranaArrow.CanBeCasted() && Menu.Item("killsteal").GetValue<bool>() && Utils.SleepCheck("MiranaAutoKS"))
             {
-                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Menu.Item("predictionrange").GetValue<Slider>().Value)))
+                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Menu.Parent.Item("predictionrange").GetValue<Slider>().Value)))
                 {
                     float damage;
 
@@ -374,7 +394,7 @@ namespace Cloey.Plugins.Heroes
                         var distToHero = Me.NetworkPosition.Dist(hero.NetworkPosition);
                         var distTime = (550 + Game.Ping) + (1000 * (Me.NetworkPosition.Dist(hero.NetworkPosition) / speed));
 
-                        if (Menu.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox" && !hero.IsImmobile())
+                        if (Menu.Parent.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox" && !hero.IsImmobile())
                         {
                             var zpredPosition = ZPrediction.PredictPosition(hero, (int) distTime, distToHero > 1800);
                             if (zpredPosition != default(Vector3))

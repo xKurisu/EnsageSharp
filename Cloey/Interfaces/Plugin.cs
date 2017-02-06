@@ -12,7 +12,7 @@ namespace Cloey.Interfaces
 
         public virtual string PluginName { get; set; }
         public virtual string TextureName { get; set; }
-        public virtual bool CheckHero { get; set; } = true;
+        public virtual bool IsHeroPlugin { get; set; } = false;
         public virtual ClassID ClassId { get; set; }
 
         #endregion
@@ -34,11 +34,49 @@ namespace Cloey.Interfaces
         {
             try
             {
-                var selectedOrbwalker = root.Item("orbwalkmode").GetValue<StringList>().SelectedValue;
-                if (selectedOrbwalker.ToLower() == TextureName.ToLower() || CheckHero)
+                if (IsHeroPlugin)
                 {
                     Root = root;
                     Menu = new Menu(PluginName, TextureName + "root");
+
+                    // todo:
+
+                    SetupSpells();
+                    OnLoadPlugin();
+                    root.AddSubMenu(Menu);
+
+                    Events.OnClose += Events_OnClose;
+                    Game.OnIngameUpdate += Game_OnUpdate;
+                    Drawing.OnDraw += Drawing_OnDraw;
+                }
+
+                // orbwalkers
+                var orbwalker = root.Item("orbwalkmode");
+                if (orbwalker != null)
+                {
+                    var selected = orbwalker.GetValue<StringList>().SelectedValue;
+                    if (selected.ToLower() == TextureName.ToLower())
+                    {
+                        Root = root;
+                        Menu = new Menu(PluginName, TextureName + "root");
+
+                        // todo:
+
+                        SetupSpells();
+                        OnLoadPlugin();
+                        root.AddSubMenu(Menu);
+
+                        Events.OnClose += Events_OnClose;
+                        Game.OnIngameUpdate += Game_OnUpdate;
+                        Drawing.OnDraw += Drawing_OnDraw;
+                    }
+                }
+
+                // items
+                if (TextureName.ToLower().Contains("item"))
+                {
+                    Root = root;
+                    Menu = new Menu(" " + PluginName, TextureName + "root", false, TextureName, true);
 
                     // todo:
 
@@ -55,7 +93,7 @@ namespace Cloey.Interfaces
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                Game.PrintMessage("<font color=\"#FFF280\">Exception thrown at ComboHero.Init: </font>: " + e.Message);
+                Game.PrintMessage("<font color=\"#FFF280\">Exception thrown at Plugin.Init: </font>: " + e.Message);
             }
 
             return this;
@@ -88,7 +126,7 @@ namespace Cloey.Interfaces
                 return;
             }
 
-            if (Environment.TickCount - _limiter >= Menu.Parent.Item("ticklimiter").GetValue<Slider>().Value)
+            if (Environment.TickCount - _limiter >= 250)
             {
                 OnUpdate();
                 _limiter = Environment.TickCount;

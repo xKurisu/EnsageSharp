@@ -23,7 +23,6 @@
         public override string PluginName => "Orbwalker";
         public override string TextureName => "moones";
         public override ClassID ClassId => ObjectManager.LocalHero.ClassID;
-        public override bool CheckHero => false;
 
         #endregion
 

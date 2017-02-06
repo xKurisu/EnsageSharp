@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+
 using Ensage;
 using Ensage.Common;
 using Ensage.Common.Menu;
@@ -17,6 +18,12 @@ namespace Cloey
         internal static Hero Me => ObjectManager.LocalHero;
         internal static List<Plugin> LoadedPlugins = new List<Plugin>();
 
+        internal static MenuItem targetingItem;
+        internal static MenuItem orbwalkerItem;
+        internal static MenuItem predictionItem;
+        internal static MenuItem predictionRangeItem;
+        internal static MenuItem switcherItem;
+
         static void Main(string[] args)
         {
             Events.OnLoad += OnLoad;
@@ -29,26 +36,55 @@ namespace Cloey
 
             RootMenu = new Menu("Cloey", "cloey", true);
 
-            var amenu = new Menu("Main", "utils");
-            amenu.AddItem(new MenuItem("ticklimiter", "Tick Limiter")).SetValue(new Slider(250, 0, 1000)).SetTooltip("Limit OnUpdate");
-            amenu.AddItem(new MenuItem("orbwalkmode", "Orbwalker: "))
-                    .SetValue(new StringList(new[] {"Moones"} ))
-                    .ValueChanged += (o, args) =>
+            var amenu = new Menu("Main", "main");
+            switcherItem = new MenuItem("switcher", "AIO Mode: ");
+            amenu.AddItem(switcherItem)
+                .SetValue(new StringList(new[] { "Utility + Hero", "Utility Only" })).ValueChanged += (o, args) =>
                 {
-                    var mLoaded = args.GetNewValue<StringList>().SelectedIndex == 0 && RootMenu.Children.All(x => x.Name != "moonesroot");
-                    var kLoaded = args.GetNewValue<StringList>().SelectedIndex == 1 && RootMenu.Children.All(x => x.Name != "zynoxroot");
+                    orbwalkerItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
+                    targetingItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
+                    predictionItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
+                    predictionRangeItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
+
+                    var mLoaded = args.GetNewValue<StringList>().SelectedIndex == 1 &&
+                                  RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
+                    var kLoaded = args.GetNewValue<StringList>().SelectedIndex == 0 && 
+                                 !RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
 
                     RootMenu.Item("f5check").Show(mLoaded || kLoaded);
                 };
 
-            amenu.AddItem(new MenuItem("f5check", "Orbwalker not Loaded Please F5!"))
-                .SetFontColor(Color.Fuchsia)
-                .Show(false);
 
+            targetingItem = new MenuItem("targeting", "Targeting:");
+            orbwalkerItem = new MenuItem("orbwalkmode", "Orbwalker: ");
+            predictionItem = new MenuItem("prediction", "Prediction: ");
+            predictionRangeItem = new MenuItem("predictionrange", "Max Range: ");
+
+            if (switcherItem.GetValue<StringList>().SelectedIndex != 1)
+            {
+                amenu.AddItem(targetingItem).SetValue(new StringList(new[] { "Mouse", "Quickest Kill" }, 1));
+                amenu.AddItem(orbwalkerItem).SetValue(new StringList(new[] { "Moones" }));
+                amenu.AddItem(predictionItem).SetValue(new StringList(new[] { "Common", "Zynox" }));
+                amenu.AddItem(predictionRangeItem).SetValue(new Slider(1800, 1000, 3000));
+            }
+
+            amenu.AddItem(new MenuItem("f5check", "Reload Required Please F5!")).SetFontColor(Color.Fuchsia).Show(false);
             RootMenu.AddSubMenu(amenu);
 
-            GetTypesByGroup("Plugins.Heroes").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
-            GetTypesByGroup("Plugins.Orbwalkers").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
+            if (switcherItem.GetValue<StringList>().SelectedIndex != 1)
+            {
+                GetTypesByGroup("Plugins.Heroes").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
+                GetTypesByGroup("Plugins.Orbwalkers").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
+            }
+
+            var imenu = new Menu("Utility", "imenu");
+            imenu.AddItem(new MenuItem("wip", "TODO **WIP**")).SetFontColor(Color.Fuchsia);
+
+            var bootsMenu = new Menu("Boots", "boots");
+            GetTypesByGroup("Plugins.Items.Boots").ForEach(x => { NewPlugin((Plugin) NewInstance(x), bootsMenu); });
+            imenu.AddSubMenu(bootsMenu);
+
+            RootMenu.AddSubMenu(imenu);
             RootMenu.AddToMainMenu();
 
             var color = System.Drawing.Color.FromArgb(255, 255, 135, 0);

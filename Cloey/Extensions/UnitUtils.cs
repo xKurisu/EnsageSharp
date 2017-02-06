@@ -91,20 +91,22 @@ namespace Cloey.Extensions
 
             Hero target = null;
 
-            if (menu.Item("targeting").GetValue<StringList>().SelectedIndex == 0)
-                return Heroes.All.Where(x=> x.IsValidUnit(range)).OrderBy(x => x.Dist(me.Position)).FirstOrDefault();
+            if (menu.Parent.Item("targeting").GetValue<StringList>().SelectedIndex == 0)
+                return Heroes.All.Where(x => x.IsValidUnit(range)).OrderBy(x => x.Dist(me.Position)).FirstOrDefault();
 
             foreach (Hero hero2 in Heroes.All.Where(x => x.IsValidUnit(range)))
-            {
-                var num3 = hero2.DamageTaken(num1, DamageType.Physical, me);
-                var num4 = hero2.Health / num3;
-
-                if (target == null || num2 > num4)
+                foreach (var hero in ObjectManager.GetEntitiesFast<Hero>().Where(x => IsValidUnit(x, range)))
                 {
-                    target = hero2;
-                    num2 = num4;
+                    var num3 = hero2.DamageTaken(num1, DamageType.Physical, me);
+                    var num4 = hero2.Health / num3;
+
+                    if (target == null || num2 > num4)
+                    {
+                        target = hero2;
+                        num2 = num4;
+                    }
+
                 }
-            }
 
             return target;
         }

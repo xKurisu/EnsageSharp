@@ -75,6 +75,11 @@ namespace Cloey.Plugins.Heroes
 
         public override void OnUpdate()
         {
+            foreach (var d in Me.Inventory.Items)
+            {
+                Console.WriteLine(d.Name + " : " + d.TextureName);
+            }
+
             if (FleeKeyDown)
             {
                 TryLeap();

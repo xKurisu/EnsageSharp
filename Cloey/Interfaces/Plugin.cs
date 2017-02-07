@@ -16,7 +16,7 @@ namespace Cloey.Interfaces
         public virtual string PluginName { get; set; }
         public virtual string TextureName { get; set; }
         public virtual bool IsHeroPlugin { get; set; } = false;
-        public virtual ClassID ClassId { get; set; }
+        public virtual ClassID ClassId { get; set; } = ObjectManager.LocalHero.ClassID;
 
         public Item Item;
         public Dictionary<string, bool> cDict = new Dictionary<string, bool>();
@@ -53,7 +53,7 @@ namespace Cloey.Interfaces
                     OnLoadPlugin();
                     root.AddSubMenu(Menu);
 
-                    if (cDict.ContainsKey("Init") == false)
+                    if (!cDict.ContainsKey("Init"))
                     {
                         Events.OnClose += Events_OnClose;
                         Game.OnIngameUpdate += Game_OnUpdate;
@@ -81,7 +81,7 @@ namespace Cloey.Interfaces
                         OnLoadPlugin();
                         root.AddSubMenu(Menu);
 
-                        if (cDict.ContainsKey("Init") == false)
+                        if (!cDict.ContainsKey("Init"))
                         {
                             Events.OnClose += Events_OnClose;
                             Game.OnIngameUpdate += Game_OnUpdate;
@@ -107,7 +107,7 @@ namespace Cloey.Interfaces
                     OnLoadPlugin();
                     root.AddSubMenu(Menu);
 
-                    if (cDict.ContainsKey("Init") == false)
+                    if (!cDict.ContainsKey("Init"))
                     {
                         Events.OnClose += Events_OnClose;
                         Game.OnIngameUpdate += Game_OnUpdate;
@@ -153,36 +153,33 @@ namespace Cloey.Interfaces
                 return;
             }
 
-            if (Environment.TickCount - _limiter >= 250)
+            if (Environment.TickCount - _limiter >= 250) 
             {
-                if (!TextureName.Contains("item"))
+                if (TextureName.Contains("item"))
                 {
-                    OnUpdate();
-                    _limiter = Environment.TickCount;
-                }
-                else
-                {
-                    var combo = Root?.Item("combokey").GetValue<KeyBind>().Active == true;
+                    var combo = Root != null && Root.Item("combokey").GetValue<KeyBind>().Active;
                     if (combo || Menu.Item(TextureName + "mode").GetValue<StringList>().SelectedIndex != 0)
                     {
-                        foreach (var item in Me.Inventory.Items.Where(x => x.TextureName.Contains(TextureName) && x.CanBeCasted()))
+                        var myItems = Me.Inventory.Items;
+                        foreach (var item in myItems.Where(x => x.TextureName.Contains(TextureName)))
                         {
-                            var textureName = item.TextureName;
-                            if (Item == null || textureName != TextureName)
+                            if (Menu.Item(TextureName + "enabled").GetValue<bool>() && item.CanBeCasted())
                             {
-                                Item = Me.FindItem(textureName);
-                                TextureName = textureName;
-                            }
-                            else
-                            {
-                                if (Menu.Item(TextureName + "enabled").GetValue<bool>())
+                                var slot = Me.FindItem(item.TextureName);
+                                if (slot != null)
                                 {
+                                    Item = slot;
                                     OnUpdate();
                                     _limiter = Environment.TickCount;
                                 }
                             }
                         }
                     }
+                }
+                else
+                {
+                    OnUpdate();
+                    _limiter = Environment.TickCount;
                 }
             }
         }

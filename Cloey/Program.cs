@@ -43,7 +43,6 @@ namespace Cloey
                 .SetValue(new StringList(new[] { "Utility + Hero", "Utility Only" })).ValueChanged += (o, args) =>
                 {
                     orbwalkerItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
-                    targetingItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
                     predictionItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
                     predictionRangeItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
 
@@ -63,9 +62,10 @@ namespace Cloey
             predictionAllowCancelItem = new MenuItem("predictionallowcancel", "Allow Self Cast Interrupt");
             predictionAllowCancelItem.SetTooltip("Soon").Show(false);
 
+            amenu.AddItem(targetingItem).SetValue(new StringList(new[] { "Mouse", "Quickest Kill" }));
+
             if (switcherItem.GetValue<StringList>().SelectedIndex != 1)
             {
-                amenu.AddItem(targetingItem).SetValue(new StringList(new[] { "Mouse", "Quickest Kill" }, 1));
                 amenu.AddItem(orbwalkerItem).SetValue(new StringList(new[] { "Moones", "None" }));
 
                 orbwalkerItem.ValueChanged += (o, args) =>

@@ -1,8 +1,8 @@
 ﻿using System;
 using Cloey.Extensions;
 using Cloey.Interfaces;
-using Ensage;
 using Ensage.Common;
+using Ensage.Common.Extensions;
 
 namespace Cloey.Plugins.Items.Offense
 {
@@ -10,17 +10,25 @@ namespace Cloey.Plugins.Items.Offense
     {
         public override string PluginName => "Dagon";
         public override string TextureName => "item_dagon";
-        public override ClassID ClassId => ObjectManager.LocalHero.ClassID;
 
         public override void OnUpdate()
         {
-            var target = Me.GetTarget(1000, Root);
-            if (target.IsValidUnit())
+            if (Item != null)
             {
-                if (Utils.SleepCheck("Use" + TextureName))
+                var target = Me.GetTarget(1000, Root);
+                if (target.IsValidUnit(new[] { 600, 650, 700, 750, 800 } [Math.Min(0, Item.Level - 1)]))
                 {
-                    Item.UseAbility(target);
-                    Utils.Sleep(300, "Use" + TextureName);
+                    var eth = Me.FindItem("item_ethereal_blade");
+                    if (eth != null && eth.CanBeCasted())
+                    {
+                        return;
+                    }
+
+                    if (Utils.SleepCheck("Use" + TextureName))
+                    {
+                        Item.UseAbility(target);
+                        Utils.Sleep(300, "Use" + TextureName);
+                    }
                 }
             }
         }

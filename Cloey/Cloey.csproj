@@ -64,6 +64,7 @@
     <Compile Include="Plugins\Items\item_arcane_boots.cs" />
     <Compile Include="Plugins\Items\item_dagon.cs" />
     <Compile Include="Plugins\Items\item_ethereal_blade.cs" />
+    <Compile Include="Plugins\Items\item_cyclone.cs" />
     <Compile Include="Plugins\Items\item_phase_boots.cs" />
     <Compile Include="Plugins\Items\item_shivas_guard.cs" />
     <Compile Include="Plugins\Orbwalkers\Moones\ControllableUnits.cs" />

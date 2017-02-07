@@ -8,7 +8,6 @@ namespace Cloey.Plugins.Items.Boots
     {
         public override string PluginName => "Arcane Boots";
         public override string TextureName => "item_arcane_boots";
-        public override ClassID ClassId => ObjectManager.LocalHero.ClassID;
 
         public override void OnUpdate()
         {

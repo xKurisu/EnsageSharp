@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Cloey.Extensions;
 using Cloey.Interfaces;
-using Ensage;
 using Ensage.Common;
+using Ensage.Common.Extensions;
 
 namespace Cloey.Plugins.Items.Offense
 {
@@ -14,13 +10,18 @@ namespace Cloey.Plugins.Items.Offense
     {
         public override string PluginName => "Shiva's Guard";
         public override string TextureName => "item_shivas_guard";
-        public override ClassID ClassId => ObjectManager.LocalHero.ClassID;
 
         public override void OnUpdate()
         {
-            var target = Me.GetTarget(1000, Root);
+            var target = Me.GetTarget(900, Root);
             if (target.IsValidUnit())
             {
+                var eth = Me.FindItem("item_ethereal_blade");
+                if (eth != null && eth.CanBeCasted())
+                {
+                    return;
+                }
+
                 if (Utils.SleepCheck("Use" + TextureName))
                 {
                     Item.UseAbility();

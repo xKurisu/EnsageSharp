@@ -14,7 +14,7 @@ namespace Cloey
 {
     internal class Program
     {
-        internal static Menu RootMenu;
+        internal static Menu Origin;
         internal static Hero Me => ObjectManager.LocalHero;
         internal static List<Plugin> LoadedPlugins = new List<Plugin>();
 
@@ -22,6 +22,7 @@ namespace Cloey
         internal static MenuItem orbwalkerItem;
         internal static MenuItem predictionItem;
         internal static MenuItem predictionRangeItem;
+        internal static MenuItem predictionAllowCancelItem;
         internal static MenuItem switcherItem;
 
         static void Main(string[] args)
@@ -34,7 +35,7 @@ namespace Cloey
         {
             Orbwalking.Load();
 
-            RootMenu = new Menu("Cloey", "cloey", true);
+            Origin = new Menu(" Cloey#", "cloey", true);
 
             var amenu = new Menu("Main", "main");
             switcherItem = new MenuItem("switcher", "AIO Mode: ");
@@ -47,11 +48,11 @@ namespace Cloey
                     predictionRangeItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
 
                     var mLoaded = args.GetNewValue<StringList>().SelectedIndex == 1 &&
-                                  RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot" || x.Name ==  x.TextureName + "main");
+                                  Origin.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot" || x.Name ==  x.TextureName + "main");
                     var kLoaded = args.GetNewValue<StringList>().SelectedIndex == 0 && 
-                                 !RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
+                                 !Origin.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
 
-                    RootMenu.Item("f5check").Show(mLoaded || kLoaded);
+                    Origin.Item("f5check").Show(mLoaded || kLoaded);
                 };
 
 
@@ -59,6 +60,8 @@ namespace Cloey
             orbwalkerItem = new MenuItem("orbwalkmode", "Orbwalker: ");
             predictionItem = new MenuItem("prediction", "Prediction: ");
             predictionRangeItem = new MenuItem("predictionrange", "Max Range: ");
+            predictionAllowCancelItem = new MenuItem("predictionallowcancel", "Allow Self Cast Interrupt");
+            predictionAllowCancelItem.SetTooltip("Soon").Show(false);
 
             if (switcherItem.GetValue<StringList>().SelectedIndex != 1)
             {
@@ -68,35 +71,43 @@ namespace Cloey
                 orbwalkerItem.ValueChanged += (o, args) =>
                 {
                     var mLoaded = args.GetNewValue<StringList>().SelectedIndex == 1 &&
-                                  RootMenu.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
+                                  Origin.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
+                    var kLoaded = args.GetNewValue<StringList>().SelectedIndex == 0 &&
+                                  !Origin.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot");
 
-                    RootMenu.Item("f5check").Show(mLoaded);
+                    Origin.Item("f5check").Show(mLoaded || kLoaded);
                 };
 
-                amenu.AddItem(predictionItem).SetValue(new StringList(new[] { "Common", "Zynox" }));
+                amenu.AddItem(predictionItem).SetValue(new StringList(new[] { "Common", "Zynox" }, 1));
                 amenu.AddItem(predictionRangeItem).SetValue(new Slider(1800, 1000, 3000));
+                amenu.AddItem(predictionAllowCancelItem).SetValue(false).ValueChanged += (o, args) => args.Process = false;
+
             }
 
             amenu.AddItem(new MenuItem("f5check", "Reload Required Please F5!")).SetFontColor(Color.Fuchsia).Show(false);
-            RootMenu.AddSubMenu(amenu);
+            Origin.AddSubMenu(amenu);
+
+            var hkmenu = new Menu("Hotkeys", "hkmenu");
+            hkmenu.AddItem(new MenuItem("combokey", "Combo [active]")).SetValue(new KeyBind(32, KeyBindType.Press));
+            hkmenu.AddItem(new MenuItem("mixedkey", "Mixed [active]")).SetValue(new KeyBind('G', KeyBindType.Press));
+            Origin.AddSubMenu(hkmenu);
 
             if (switcherItem.GetValue<StringList>().SelectedIndex != 1)
             {
-                GetTypesByGroup("Plugins.Heroes").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
+                GetTypesByGroup("Plugins.Heroes").ForEach(x => { NewPlugin((Plugin) NewInstance(x), Origin); });
 
                 if (orbwalkerItem.GetValue<StringList>().SelectedIndex != 1)
-                    GetTypesByGroup("Plugins.Orbwalkers").ForEach(x => { NewPlugin((Plugin) NewInstance(x), RootMenu); });
+                    GetTypesByGroup("Plugins.Orbwalkers").ForEach(x => { NewPlugin((Plugin) NewInstance(x), Origin); });
             }
 
-            var imenu = new Menu("Utility", "imenu");
-            imenu.AddItem(new MenuItem("wip", "TODO **WIP**")).SetFontColor(Color.Fuchsia);
+            var imenu = new Menu("Utility", "utility");
 
-            var bootsMenu = new Menu("Boots", "boots");
-            GetTypesByGroup("Plugins.Items.Boots").ForEach(x => { NewPlugin((Plugin) NewInstance(x), bootsMenu); });
-            imenu.AddSubMenu(bootsMenu);
+            var umenu = new Menu("Items", "items");
+            GetTypesByGroup("Plugins.Items.Offense").ForEach(x => { NewPlugin((Plugin) NewInstance(x), umenu); });
+            imenu.AddSubMenu(umenu);
 
-            RootMenu.AddSubMenu(imenu);
-            RootMenu.AddToMainMenu();
+            Origin.AddSubMenu(imenu);
+            Origin.AddToMainMenu();
 
             var color = System.Drawing.Color.FromArgb(255, 255, 135, 0);
             var hexargb = $"#{color.R:X2}{color.G:X2}{color.B:X2}{color.A:X2}";
@@ -106,7 +117,7 @@ namespace Cloey
         private static void Events_OnClose(object sender, EventArgs e)
         {
             LoadedPlugins.Clear();
-            RootMenu?.RemoveFromMainMenu();
+            Origin?.RemoveFromMainMenu();
         }
 
         private static void NewPlugin(Plugin plugin, Menu parent)
@@ -119,7 +130,7 @@ namespace Cloey
                 }
 
                 if (LoadedPlugins.Contains(plugin) == false)
-                    LoadedPlugins.Add(plugin.Init(parent));
+                    LoadedPlugins.Add(plugin.Init(parent, Origin));
             }
 
             catch (Exception e)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cloey.Extensions;
 using Ensage;
 using Ensage.Common;
 using SharpDX;
@@ -74,14 +75,33 @@ namespace Cloey.Helpers
             return !completed ? new List<Vector3> { targetPosition } : path;
         }
 
-        public static Vector3 PredictPosition(Unit target, int time, bool noTurning = false,
-            PredictionType type = PredictionType.GridNav)
+        public static Vector3 PredictDisabledPosition(Unit target, float time)
+        {
+            Modifier z;
+
+            if (target.IsDisabled(out z))
+            {
+                return z.ElapsedTime * 1000 > time  &&
+                      (z.RemainingTime * 1000) + Game.Ping <= time ? target.NetworkPosition : default(Vector3);
+            }
+
+            return default(Vector3);
+        }
+
+        public static Vector3 PredictPosition(Unit target, int time, bool noTurning = false, PredictionType type = PredictionType.GridNav)
         {
             var maxDistance = time / 1000.0f * target.MovementSpeed + target.HullRadius;
 
             if (noTurning && IsRotating(target)) // max distance checking? -> todo: testing
             {
                 return Vector3.Zero;
+            }
+
+            Modifier z;
+            if (target.IsDisabled(out z))
+            {
+                return z.ElapsedTime * 1000 > time && 
+                       z.RemainingTime * 1000 + Game.Ping <= time ? target.NetworkPosition : Vector3.Zero;
             }
 
             if (!target.IsMoving)

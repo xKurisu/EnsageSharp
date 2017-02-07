@@ -6,6 +6,7 @@ using Ensage.Common.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cloey.Helpers;
 using Ensage.Common.Objects;
 using SharpDX;
 
@@ -15,45 +16,48 @@ namespace Cloey.Extensions
     {
         #region Tidy: Aura Mechanics
 
-        internal static bool IsImmobile(this Unit unit)
+        internal static Modifier GetModifier(this Unit unit, string modifierName)
         {
-            var strs = new[] {"Stunned", "Frozen", "Rooted", "Flying"};
-            return strs.Any(unitstate => unit.UnitState.ToString().Contains(unitstate));
+            return unit.HasModifier(modifierName) ? unit.Modifiers.FirstOrDefault(x => modifierName == x.Name) : null;
         }
 
-        #endregion
-
-        #region Tidy: Clustered Units
-
-        internal static IEnumerable<Unit> GetRadiusCluster(this Unit unit, IEnumerable<Unit> otherUnits, float radius)
+        internal static Modifier GetModifier(this Unit unit, HashSet<string> modifiers)
         {
-            if (unit != null)
-            {
-                var targetLoc = unit.Position;
-                return otherUnits.Where(u => u.Position.Dist(targetLoc, true) <= radius * radius);
-            }
-            return null;
+            return modifiers.Where(unit.HasModifier).Select(unit.GetModifier).FirstOrDefault();
         }
 
-        internal static Unit GetBestUnitForCluster(IEnumerable<Unit> units, float clusterRange)
+        internal static bool IsDisabled(this Unit unit, out Modifier modifier, bool includeInvulnerable = true)
         {
-            IEnumerable<Unit> wUnits = units as Unit[] ?? units.ToArray();
+            Modifier invulnerableModifier = null;
 
-            if (wUnits.Any())
+            var rootModifier = unit.GetModifier(ModifierData.RootModifiers);
+            var vulnerableModifier = unit.GetModifier(ModifierData.VulnerableStunModifiers);
+
+            if (includeInvulnerable)
             {
-                var firstOrDefault = (wUnits.Select(u => new {Count = GetRadiusClusterCount(u, wUnits, clusterRange), Unit = u})).OrderByDescending(a => a.Count).FirstOrDefault();
-                if (firstOrDefault != null)
-                    return firstOrDefault.Unit;
+                invulnerableModifier = unit.GetModifier(ModifierData.InvulnerableStunModifiers);
             }
 
-            return null;
-        }
+            if (vulnerableModifier != null)
+            {
+                modifier = vulnerableModifier;
+                return true;
+            }
 
-        internal static int GetRadiusClusterCount(this Unit target, IEnumerable<Unit> otherUnits, float radius)
-        {
-            var rdx = radius * radius;
-            var targetLoc = target.NetworkPosition;
-            return otherUnits.Count(u => u.Position.Dist(targetLoc, true) <= rdx);
+            if (invulnerableModifier != null)
+            {
+                modifier = invulnerableModifier;
+                return true;
+            }
+
+            if (rootModifier != null)
+            {
+                modifier = rootModifier;
+                return true;
+            }
+
+            modifier = null;
+            return false;
         }
 
         #endregion
@@ -91,7 +95,7 @@ namespace Cloey.Extensions
 
             Hero target = null;
 
-            if (menu.Parent.Item("targeting").GetValue<StringList>().SelectedIndex == 0)
+            if (menu.Item("targeting").GetValue<StringList>().SelectedIndex == 0)
                 return Heroes.All.Where(x => x.IsValidUnit(range)).OrderBy(x => x.Dist(me.Position)).FirstOrDefault();
 
             foreach (Hero hero2 in Heroes.All.Where(x => x.IsValidUnit(range)))

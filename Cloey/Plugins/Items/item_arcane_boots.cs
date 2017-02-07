@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Cloey.Interfaces;
 using Ensage;
 
@@ -14,9 +10,9 @@ namespace Cloey.Plugins.Items.Boots
         public override string TextureName => "item_arcane_boots";
         public override ClassID ClassId => ObjectManager.LocalHero.ClassID;
 
-        public item_arcane_boots()
+        public override void OnUpdate()
         {
-            
+
         }
     }
 }

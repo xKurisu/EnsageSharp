@@ -55,13 +55,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\ModifierData.cs" />
     <Compile Include="Helpers\ZPrediction.cs" />
     <Compile Include="Interfaces\Plugin.cs" />
     <Compile Include="Extensions\MathUtils.cs" />
     <Compile Include="Extensions\UnitUtils.cs" />
     <Compile Include="Plugins\Heroes\Mirana.cs" />
-    <Compile Include="Plugins\Items\Boots\item_arcane_boots.cs" />
-    <Compile Include="Plugins\Items\Boots\item_phase_boots.cs" />
+    <Compile Include="Plugins\Items\item_arcane_boots.cs" />
+    <Compile Include="Plugins\Items\item_dagon.cs" />
+    <Compile Include="Plugins\Items\item_ethereal_blade.cs" />
+    <Compile Include="Plugins\Items\item_phase_boots.cs" />
+    <Compile Include="Plugins\Items\item_shivas_guard.cs" />
     <Compile Include="Plugins\Orbwalkers\Moones\ControllableUnits.cs" />
     <Compile Include="Plugins\Orbwalkers\Moones\Lasthit.cs" />
     <Compile Include="Plugins\Orbwalkers\Moones\Orbwalker.cs" />

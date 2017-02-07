@@ -86,7 +86,7 @@ namespace Cloey.Extensions
             return new Vector2((float) (v.X * num1 - v.Y * num2), (float) (v.Y * num1 + v.X * num2));
         }
 
-        public static Segment ProjectsOn(this Vector2 point, Vector2 segmentStart, Vector2 segmentEnd)
+        public static Segment ProjectOn(this Vector2 point, Vector2 segmentStart, Vector2 segmentEnd)
         {
             double x1 = point.X;
             float y1 = point.Y;
@@ -123,15 +123,13 @@ namespace Cloey.Extensions
             var direction = (end - start).Normalized();
             var endposition = start + direction * start.Dist(end);
 
-            IEnumerable<Unit> objinpath;
-            objinpath = ObjectManager.GetEntities<Unit>()
-                .Where(b => b.Team != me.Team && b.IsValidUnit())
-                .Where(unit => ObjectManager.LocalHero.NetworkPosition.Dist(unit.Position) <= range)
-                .Where(unit => !heroOnly || unit is Hero)
-                .Select(unit => new {unit, seg = unit.Position.To2D().ProjectsOn(start, endposition)})
-                .Select(x => new {t = x, segdist = x.unit.Position.To2D().Dist(x.seg.SegmentPoint)})
-                .Where(x => x.t.unit.HullRadius + 35 + width > x.segdist && x.t.seg.IsOnSegment)
-                .Select(x => x.t.unit);
+            var objinpath = from unit in ObjectManager.GetEntitiesFast<Unit>().Where(b => b.Team != me.Team)
+                where me.NetworkPosition.Dist(unit.NetworkPosition) <= range
+                where !heroOnly || unit is Hero
+                let proj = unit.NetworkPosition.To2D().ProjectOn(start, endposition)
+                let projdist = unit.Dist(proj.SegmentPoint)
+                where unit.HullRadius + 35 + width > projdist && proj.IsOnSegment
+                select unit;
 
             units = objinpath.ToList();
             return units.Count;

@@ -19,7 +19,7 @@ namespace Cloey.Plugins.Heroes
     internal class Mirana : Plugin
     {
         public override string PluginName => "Mirana";
-        public override string TextureName => "mirana";
+        public override string TextureName => "npc_dota_hero_mirana";
         public override ClassID ClassId => ClassID.CDOTA_Unit_Hero_Mirana;
         public override bool IsHeroPlugin => true;
 
@@ -33,8 +33,8 @@ namespace Cloey.Plugins.Heroes
         internal static string[] ComboSpells = { "mirana_arrow", "mirana_starfall", /*"mirana_leap"*/ };
         internal static string[] FleeSpells = { "mirana_leap" };
 
-        public bool MixedKeyDown => Menu?.Item("mixedkey").GetValue<KeyBind>().Active == true;
-        public bool ComboKeyDown => Menu?.Item("combokey").GetValue<KeyBind>().Active == true;
+        public bool MixedKeyDown => Menu.Parent?.Item("mixedkey").GetValue<KeyBind>().Active == true;
+        public bool ComboKeyDown => Menu.Parent?.Item("combokey").GetValue<KeyBind>().Active == true;
         public bool FleeKeyDown => Menu?.Item("fleekey").GetValue<KeyBind>().Active == true;
         public bool JumpKeyDown => Menu?.Item("walljumpkey").GetValue<KeyBind>().Active == true;
 
@@ -43,22 +43,20 @@ namespace Cloey.Plugins.Heroes
             var cmenu = new Menu("Combo", "cmenu");
             cmenu.AddItem(new MenuItem("togglercombo", "Supported Spells: ")).SetFontColor(Color.LimeGreen)
                 .SetValue(new AbilityToggler(ComboSpells.ToDictionary(x => x, x => true)));
-            cmenu.AddItem(new MenuItem("chaincc", "Auto Chain CC")).SetValue(true).SetFontColor(Color.Orange);
+            cmenu.AddItem(new MenuItem("chaincc", "Auto Chain Crowd Control")).SetValue(true).SetFontColor(Color.Orange);
             cmenu.AddItem(new MenuItem("killsteal", "Auto Cast if Lethal")).SetValue(true).SetFontColor(Color.Orange);
             cmenu.AddItem(new MenuItem("blockks", "Block Auto Cast in Combo")).SetValue(false);
             cmenu.AddItem(new MenuItem("combomana", "Minimum Mana % to Use Combo")).SetValue(new Slider(15));
-            cmenu.AddItem(new MenuItem("combokey", "Combo [active]")).SetValue(new KeyBind(32, KeyBindType.Press));
             Menu.AddSubMenu(cmenu);
 
             var mmenu = new Menu("Mixed", "mmenu");
             mmenu.AddItem(new MenuItem("togglermixed", "Supported Spells: ")).SetFontColor(Color.LimeGreen)
                 .SetValue(new AbilityToggler(MixedSpells.ToDictionary(x => x, x => true)));
             mmenu.AddItem(new MenuItem("mixedmana", "Minimum Mana % to Use Harass")).SetValue(new Slider(55));
-            mmenu.AddItem(new MenuItem("mixedkey", "Mixed [active]")).SetValue(new KeyBind(32, KeyBindType.Press));
             Menu.AddSubMenu(mmenu);
 
             var fmenu = new Menu("Flee", "fmenu");
-            fmenu.AddItem(new MenuItem("togglerflee", "Leaping is still in Beta: ")).SetFontColor(Color.Red)
+            fmenu.AddItem(new MenuItem("togglerflee", "Supported Beta Spells: ")).SetFontColor(Color.LimeGreen)
                 .SetValue(new AbilityToggler(FleeSpells.ToDictionary(x => x, x => true)));
 
             fmenu.AddItem(new MenuItem("orbwalkwj", "Orbwalk with Walljump")).SetValue(true);
@@ -132,7 +130,7 @@ namespace Cloey.Plugins.Heroes
 
                     var to = Me.InFront(jumpRange);
 
-                    var proj = to.To2D().ProjectsOn(Me.Position.To2D(), Game.MousePosition.To2D());
+                    var proj = to.To2D().ProjectOn(Me.Position.To2D(), Game.MousePosition.To2D());
                     if (proj.IsOnSegment && Inputs.Count > 2)
                     {
                         if (MiranaLeap.CanBeCasted() && Inputs.Values.Last() - Me.Rotation < 25f)
@@ -168,7 +166,7 @@ namespace Cloey.Plugins.Heroes
 
         internal void DoArrow()
         {
-            var target = Me.GetTarget(1000 + Menu.Parent.Item("predictionrange").GetValue<Slider>().Value / 2, Menu);
+            var target = Me.GetTarget(1000 + Menu.Parent.Item("predictionrange").GetValue<Slider>().Value / 2, Root);
             if (MiranaArrow.CanBeCasted() && Menu.Item("togglercombo").GetValue<AbilityToggler>().IsEnabled("mirana_arrow"))
             {   
                 if (target.IsValidUnit(Menu.Parent.Item("predictionrange").GetValue<Slider>().Value))
@@ -176,12 +174,12 @@ namespace Cloey.Plugins.Heroes
                     var speed = MiranaArrow.GetAbilityData("arrow_speed");
                     var radius = MiranaArrow.GetAbilityData("arrow_width") + 35;
 
-                    var distToHero = Me.NetworkPosition.Dist(target.NetworkPosition);
-                    var distTime = (550 + Game.Ping) + (1000 * (Me.NetworkPosition.Dist(target.NetworkPosition) / speed));
+                    var distToHero = Me.NetworkPosition.To2D().Dist(target.NetworkPosition.To2D());
+                    var distTime = (550 + Game.Ping) + (1000 * (distToHero / speed));
 
-                    if (Menu.Parent.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox" && !target.IsImmobile())
+                    if (Menu.Parent.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox")
                     {
-                        var zpredPosition = ZPrediction.PredictPosition(target, (int) distTime, distToHero > 1800);
+                        var zpredPosition = ZPrediction.PredictPosition(target, (int) distTime, distToHero > 1600);
                         if (zpredPosition != default(Vector3))
                         {
                             List<Unit> units;
@@ -213,7 +211,7 @@ namespace Cloey.Plugins.Heroes
 
         internal void DoStarfall()
         {
-            var target = Me.GetTarget(650, Menu);
+            var target = Me.GetTarget(650, Root);
             if (MiranaStars.CanBeCasted() && Menu.Item("togglercombo").GetValue<AbilityToggler>().IsEnabled("mirana_starfall"))
             {
                 if (target.IsValidUnit(425) && Utils.SleepCheck("StarfallCombo"))
@@ -313,7 +311,7 @@ namespace Cloey.Plugins.Heroes
 
                                     var to = Me.InFront(200);
 
-                                    var proj = wallPointOpposite.To2D().ProjectsOn(to.To2D(), cursorPos.To2D());
+                                    var proj = wallPointOpposite.To2D().ProjectOn(to.To2D(), cursorPos.To2D());
                                     if (proj.IsOnSegment && to.Dist(cursorPos) < Me.Position.Dist(cursorPos))
                                     {
                                         if (MiranaLeap.CanBeCasted())
@@ -361,12 +359,27 @@ namespace Cloey.Plugins.Heroes
             {
                 foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Menu.Parent.Item("predictionrange").GetValue<Slider>().Value)))
                 {
-                    if (hero.IsValidUnit() && hero.IsImmobile() && hero.Team != Me.Team)
+                    Modifier modifier;
+                    if (hero.IsValidUnit() && hero.IsDisabled(out modifier) && hero.Team != Me.Team)
                     {
-                        if (MiranaArrow.CastStun(hero))
+                        var speed = MiranaArrow.GetAbilityData("arrow_speed");
+                        var radius = MiranaArrow.GetAbilityData("arrow_width") + 35;
+
+                        var distToHero = Me.NetworkPosition.To2D().Dist(hero.NetworkPosition.To2D());
+                        var distTime = (550 + Game.Ping) + (1000 * (distToHero / speed));
+
+                        var zpredPosition = ZPrediction.PredictDisabledPosition(hero, distTime);
+                        if (zpredPosition != default(Vector3))
                         {
-                            Utils.Sleep(350, "MiranaAutoW");
-                            return;
+                            List<Unit> units;
+                            if (MathUtils.CountInPath(Me.NetworkPosition, zpredPosition, radius, distToHero, out units, false) <= 1)
+                            {
+                                if (Utils.SleepCheck("MiranaAutoW"))
+                                {
+                                    MiranaArrow.UseAbility(zpredPosition);
+                                    Utils.Sleep(distTime + Game.Ping, "MiranaAutoW");
+                                }
+                            }
                         }
                     }
                 }
@@ -394,7 +407,7 @@ namespace Cloey.Plugins.Heroes
                         var distToHero = Me.NetworkPosition.Dist(hero.NetworkPosition);
                         var distTime = (550 + Game.Ping) + (1000 * (Me.NetworkPosition.Dist(hero.NetworkPosition) / speed));
 
-                        if (Menu.Parent.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox" && !hero.IsImmobile())
+                        if (Menu.Parent.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox")
                         {
                             var zpredPosition = ZPrediction.PredictPosition(hero, (int) distTime, distToHero > 1800);
                             if (zpredPosition != default(Vector3))

@@ -21,7 +21,10 @@ namespace Cloey.Plugins.Items.Offense
                     var eth = Me.FindItem("item_ethereal_blade");
                     if (eth != null && eth.CanBeCasted())
                     {
-                        return;
+                        if (Menu.Parent.Item("item_ethereal_bladeenabled").GetValue<bool>())
+                        {
+                            return;
+                        }
                     }
 
                     if (Utils.SleepCheck("Use" + TextureName))

@@ -16,6 +16,16 @@ namespace Cloey.Extensions
     {
         #region Tidy: Aura Mechanics
 
+        internal static bool ModifierActive(this Unit unit, string modifier)
+        {
+            return unit.GetModifier(modifier) != null;
+        }
+
+        internal static bool HasAnyModifiers(this Unit unit, HashSet<string> modifiers)
+        {
+            return unit.GetModifier(modifiers) != null;
+        }
+
         internal static Modifier GetModifier(this Unit unit, string modifierName)
         {
             return unit.HasModifier(modifierName) ? unit.Modifiers.FirstOrDefault(x => modifierName == x.Name) : null;
@@ -64,23 +74,34 @@ namespace Cloey.Extensions
 
         #region Tidy: ValidUnit
 
-        internal static bool IsValidUnit(this Unit u, float range = float.MaxValue, Vector3 from = default(Vector3), bool checkTeam = true)
+        internal static bool IsValidUnit(this Unit u, float range = float.MaxValue, bool checkTeam = true, Vector3 from = default(Vector3))
         {
-            return u != null && u.IsVisible && u.IsValid && u.IsAlive && u.IsSelectable && !u.IsIllusion &&
+            return u != null && u.IsVisible && u.IsValid && !u.IsIllusion && u.IsAlive && u.IsSelectable &&
                    u.Position.Dist(from != default(Vector3) ? from : ObjectManager.LocalHero.NetworkPosition, true) <=
                    range * range && (u.Team != ObjectManager.LocalHero.Team || !checkTeam);
         }
 
+        internal static bool IsValidUnitFull(this Unit u, float range = float.MaxValue, bool checkTeam = true, Vector3 from = default(Vector3))
+        {
+            return u != null && u.IsVisible && u.IsValid && !u.IsIllusion && u.IsAlive && u.IsSelectable &&
+                   u.HasAnyModifiers(ModifierData.InvulnerableStunModifiers) == false &&
+                   u.HasAnyModifiers(ModifierData.CantExecuteModifiers) == false &&
+                   u.HasAnyModifiers(ModifierData.CantAttackModifiers) == false &&
+                   u.Position.Dist(from != default(Vector3) ? from : ObjectManager.LocalHero.NetworkPosition, true) <=
+                   range * range && (u.Team != ObjectManager.LocalHero.Team || !checkTeam);
+        }
+
+
         internal static bool IsControlledByMe(this Unit unit)
         {
             var source = ObjectManager.LocalPlayer;
-            return source != null && source.Selection.Where(x => (x as Unit).IsValidUnit()).Contains(unit);
+            return source != null && source.Selection.Where(x => (x as Unit).IsValidUnit(float.MaxValue, false)).Contains(unit);
         }
 
         internal static bool IsControlledByPlayer(this Unit unit, Player player)
         {
             var source = player;
-            return source != null && source.Selection.Where(x => (x as Unit).IsValidUnit()).Contains(unit);
+            return source != null && source.Selection.Where(x => (x as Unit).IsValidUnit(float.MaxValue, false)).Contains(unit);
         }
 
         #endregion

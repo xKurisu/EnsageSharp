@@ -46,6 +46,7 @@ namespace Cloey.Plugins.Heroes
             cmenu.AddItem(new MenuItem("chaincc", "Auto Chain Crowd Control")).SetValue(true).SetFontColor(Color.Orange);
             cmenu.AddItem(new MenuItem("killsteal", "Auto Cast if Lethal")).SetValue(true).SetFontColor(Color.Orange);
             cmenu.AddItem(new MenuItem("blockks", "Block Auto Cast in Combo")).SetValue(false);
+            cmenu.AddItem(new MenuItem("twostars", "Starstorm Double Hit Only")).SetValue(false);
             cmenu.AddItem(new MenuItem("combomana", "Minimum Mana % to Use Combo")).SetValue(new Slider(15));
             Menu.AddSubMenu(cmenu);
 
@@ -75,9 +76,9 @@ namespace Cloey.Plugins.Heroes
 
         public override void OnUpdate()
         {
-            foreach (var d in Me.Inventory.Items)
+            if (!Utils.SleepCheck("LimitHeroUpdate"))
             {
-                Console.WriteLine(d.Name + " : " + d.TextureName);
+                return;
             }
 
             if (FleeKeyDown)
@@ -171,20 +172,22 @@ namespace Cloey.Plugins.Heroes
 
         internal void DoArrow()
         {
-            var target = Me.GetTarget(1000 + Menu.Parent.Item("predictionrange").GetValue<Slider>().Value / 2, Root);
+            var target = Me.GetTarget(1000 + Root.Item("predictionrange").GetValue<Slider>().Value / 2, Root);
             if (MiranaArrow.CanBeCasted() && Menu.Item("togglercombo").GetValue<AbilityToggler>().IsEnabled("mirana_arrow"))
             {   
-                if (target.IsValidUnit(Menu.Parent.Item("predictionrange").GetValue<Slider>().Value))
+                if (target.IsValidUnit(Root.Item("predictionrange").GetValue<Slider>().Value))
                 {
                     var speed = MiranaArrow.GetAbilityData("arrow_speed");
                     var radius = MiranaArrow.GetAbilityData("arrow_width") + 35;
 
                     var distToHero = Me.NetworkPosition.To2D().Dist(target.NetworkPosition.To2D());
-                    var distTime = (550 + Game.Ping) + (1000 * (distToHero / speed));
+                    var distTime = (500 + Game.Ping) + (1000 * (distToHero / speed));
 
-                    if (Menu.Parent.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox")
+                    if (Root.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox")
                     {
-                        var zpredPosition = ZPrediction.PredictPosition(target, (int) distTime, distToHero > 1600);
+                        var zpredPosition = ZPrediction.PredictPosition(target, (int) distTime,
+                            Root.Item("predictionallowturning", true).GetValue<bool>());
+
                         if (zpredPosition != default(Vector3))
                         {
                             List<Unit> units;
@@ -193,8 +196,26 @@ namespace Cloey.Plugins.Heroes
                                 if (Utils.SleepCheck("MiranaW"))
                                 {
                                     MiranaArrow.UseAbility(zpredPosition);
+                                    Utils.Sleep(distTime + 250, "eul" + target.Handle);
                                     Utils.Sleep(distTime + Game.Ping, "MiranaW");
                                 }
+                            }
+                            else
+                            {
+                                if (MiranaArrow.IsInAbilityPhase)
+                                {
+                                    Me.Hold();
+                                    Utils.Sleep(125, "LimitHeroUpdate");
+                                }
+                            }
+                        }
+
+                        else
+                        {
+                            if (MiranaArrow.IsInAbilityPhase)
+                            {
+                                Me.Hold();
+                                Utils.Sleep(125, "LimitHeroUpdate");
                             }
                         }
                     }
@@ -203,6 +224,7 @@ namespace Cloey.Plugins.Heroes
                         if (Utils.SleepCheck("MiranaW"))
                         {
                             MiranaArrow.CastSkillShot(target);
+                            Utils.Sleep(distTime + 250, "eul" + target.Handle);
                             Utils.Sleep(distTime + Game.Ping, "MiranaW");
                         }
                     }
@@ -216,10 +238,10 @@ namespace Cloey.Plugins.Heroes
 
         internal void DoStarfall()
         {
-            var target = Me.GetTarget(650, Root);
+            var target = Me.GetTarget(950, Root);
             if (MiranaStars.CanBeCasted() && Menu.Item("togglercombo").GetValue<AbilityToggler>().IsEnabled("mirana_starfall"))
             {
-                if (target.IsValidUnit(425) && Utils.SleepCheck("StarfallCombo"))
+                if (target.IsValidUnitFull(Menu.Item("twostars").GetValue<bool>() ? 450 : 660) && Utils.SleepCheck("StarfallCombo"))
                 {
                     MiranaStars.UseAbility();
                     Utils.Sleep(350, "StarfallCombo");
@@ -306,7 +328,7 @@ namespace Cloey.Plugins.Heroes
 
                             var wallPointOpposite = MathUtils.GetFirstWallPoint(wallPoint.To3D(), wallPosition, 5).To3D();
 
-                            var predictedRoute = Me.PredictRoute(1000, wallPointOpposite).ToList().To2D();
+                            var predictedRoute = ZPrediction.PredictMyRoute(Me, 1000, wallPointOpposite).ToList().To2D();
                             if (predictedRoute.PathLength() - Me.Position.Dist(wallPointOpposite) > minWallWidth + Me.HullRadius)
                             {
                                 if (Me.Position.Dist(wallPointOpposite) < jumpRange - Me.HullRadius / 2)
@@ -362,10 +384,10 @@ namespace Cloey.Plugins.Heroes
         {
             if (MiranaArrow.CanBeCasted() && Menu.Item("chaincc").GetValue<bool>() && Utils.SleepCheck("MiranaAutoW"))
             {
-                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Menu.Parent.Item("predictionrange").GetValue<Slider>().Value)))
+                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Root.Item("predictionrange").GetValue<Slider>().Value)))
                 {
                     Modifier modifier;
-                    if (hero.IsValidUnit() && hero.IsDisabled(out modifier) && hero.Team != Me.Team)
+                    if (hero.IsValidUnit() && hero.IsDisabled(out modifier))
                     {
                         var speed = MiranaArrow.GetAbilityData("arrow_speed");
                         var radius = MiranaArrow.GetAbilityData("arrow_width") + 35;
@@ -382,8 +404,25 @@ namespace Cloey.Plugins.Heroes
                                 if (Utils.SleepCheck("MiranaAutoW"))
                                 {
                                     MiranaArrow.UseAbility(zpredPosition);
+                                    Utils.Sleep(distTime + 250, "eul" + hero.Handle);
                                     Utils.Sleep(distTime + Game.Ping, "MiranaAutoW");
                                 }
+                            }
+                            else
+                            {
+                                if (MiranaArrow.IsInAbilityPhase)
+                                {
+                                    Me.Hold();
+                                    Utils.Sleep(125, "LimitHeroUpdate");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (MiranaArrow.IsInAbilityPhase)
+                            {
+                                Me.Hold();
+                                Utils.Sleep(125, "LimitHeroUpdate");
                             }
                         }
                     }
@@ -397,7 +436,7 @@ namespace Cloey.Plugins.Heroes
         {
             if (MiranaArrow.CanBeCasted() && Menu.Item("killsteal").GetValue<bool>() && Utils.SleepCheck("MiranaAutoKS"))
             {
-                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Menu.Parent.Item("predictionrange").GetValue<Slider>().Value)))
+                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Root.Item("predictionrange").GetValue<Slider>().Value)))
                 {
                     float damage;
 
@@ -412,23 +451,42 @@ namespace Cloey.Plugins.Heroes
                         var distToHero = Me.NetworkPosition.Dist(hero.NetworkPosition);
                         var distTime = (550 + Game.Ping) + (1000 * (Me.NetworkPosition.Dist(hero.NetworkPosition) / speed));
 
-                        if (Menu.Parent.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox")
+                        if (Root.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox")
                         {
-                            var zpredPosition = ZPrediction.PredictPosition(hero, (int) distTime, distToHero > 1800);
+                            var zpredPosition = ZPrediction.PredictPosition(hero, (int) distTime, 
+                                Root.Item("predictionallowturning", true).GetValue<bool>());
+
                             if (zpredPosition != default(Vector3))
                             {
                                 List<Unit> units;
                                 if (MathUtils.CountInPath(Me.NetworkPosition, zpredPosition, radius, distToHero, out units, false) <= 1)
                                 {
                                     MiranaArrow.UseAbility(zpredPosition);
+                                    Utils.Sleep(distTime + 250, "eul" + hero.Handle);
                                     Utils.Sleep(distTime + Game.Ping, "MiranaAutoKS");
-                                    return;
+                                }
+                                else
+                                {
+                                    if (MiranaArrow.IsInAbilityPhase)
+                                    {
+                                        Me.Hold();
+                                        Utils.Sleep(125, "LimitHeroUpdate");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (MiranaArrow.IsInAbilityPhase)
+                                {
+                                    Me.Hold();
+                                    Utils.Sleep(125, "LimitHeroUpdate");
                                 }
                             }
                         }
                         else
                         {
                             MiranaArrow.CastSkillShot(hero);
+                            Utils.Sleep(distTime + 250, "eul" + hero.Handle);
                             Utils.Sleep(distTime + Game.Ping, "MiranaAutoKS");
                             return;
                         }

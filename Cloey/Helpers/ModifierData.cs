@@ -7,7 +7,35 @@ using System.Threading.Tasks;
 namespace Cloey.Helpers
 {
     internal class ModifierData
-    {
+    {        
+        // credits @ zaio
+        #region Category : ZAIO Modifiers
+
+        internal static readonly HashSet<string> CantAttackModifiers = new HashSet<string>
+        {
+            "modifier_obsidian_destroyer_astral_imprisonment_prison",
+            "modifier_abaddon_borrowed_time",
+            "modifier_brewmaster_primal_split",
+            "modifier_phoenix_supernova_hiding",
+            "modifier_juggernaut_omnislash_invulnerability",
+            "modifier_naga_siren_song_of_the_siren",
+            "modifier_puck_phase_shift",
+            "modifier_shadow_demon_disruption",
+            "modifier_winter_wyvern_winters_curse_aura",
+            "modifier_winter_wyvern_winters_curse",
+            "modifier_storm_spirit_ball_lightning"
+        };
+
+        internal static readonly HashSet<string> CantExecuteModifiers = new HashSet<string>
+        {
+            "modifier_dazzle_shallow_grave",
+            "modifier_oracle_false_promise",
+            "modifier_skeleton_king_reincarnation_scepter_active"
+            // "modifier_slark_shadow_dance",
+        };
+
+        #endregion
+
         #region Category : Disables (Stuns, Shackles)
 
         // stun modifiers that prevent movement
@@ -58,7 +86,6 @@ namespace Cloey.Helpers
 
         #endregion
 
-
         #region Category : Disables (Roots, Frozen)
 
         // root modifiers that prevent movement
@@ -70,7 +97,7 @@ namespace Cloey.Helpers
             "modifier_meepo_earthbind", // meepo - earthbind
             "modifier_rod_of_atos_debuff", // item - rod of atos
             "modifier_treant_overgrowth", // treant protector - overgrowth
-            "modifier_underlord_pit_of_malice_ensare", // underlord = pit of malice
+            "modifier_underlord_pit_of_malice_ensare", // underlord - pit of malice
         };
 
         #endregion

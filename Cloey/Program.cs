@@ -23,6 +23,7 @@ namespace Cloey
         internal static MenuItem predictionItem;
         internal static MenuItem predictionRangeItem;
         internal static MenuItem predictionAllowCancelItem;
+        internal static MenuItem predictionAllowTurningItem;
         internal static MenuItem switcherItem;
 
         static void Main(string[] args)
@@ -45,6 +46,7 @@ namespace Cloey
                     orbwalkerItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
                     predictionItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
                     predictionRangeItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
+                    predictionAllowTurningItem.Show(args.GetNewValue<StringList>().SelectedIndex != 1);
 
                     var mLoaded = args.GetNewValue<StringList>().SelectedIndex == 1 &&
                                   Origin.Children.Any(x => x.Name == "moonesroot" || x.Name == "zynoxroot" || x.Name ==  x.TextureName + "main");
@@ -58,7 +60,8 @@ namespace Cloey
             targetingItem = new MenuItem("targeting", "Targeting:");
             orbwalkerItem = new MenuItem("orbwalkmode", "Orbwalker: ");
             predictionItem = new MenuItem("prediction", "Prediction: ");
-            predictionRangeItem = new MenuItem("predictionrange", "Max Range: ");
+            predictionRangeItem = new MenuItem("predictionrange", " -> Max Range: ");
+            predictionAllowTurningItem = new MenuItem("predictionallowturning", " -> Ignore Turning/Rotating", true);
             predictionAllowCancelItem = new MenuItem("predictionallowcancel", "Allow Self Cast Interrupt");
             predictionAllowCancelItem.SetTooltip("Soon").Show(false);
 
@@ -79,9 +82,9 @@ namespace Cloey
                 };
 
                 amenu.AddItem(predictionItem).SetValue(new StringList(new[] { "Common", "Zynox" }, 1));
+                amenu.AddItem(predictionAllowTurningItem).SetValue(false);
                 amenu.AddItem(predictionRangeItem).SetValue(new Slider(1800, 1000, 3000));
                 amenu.AddItem(predictionAllowCancelItem).SetValue(false).ValueChanged += (o, args) => args.Process = false;
-
             }
 
             amenu.AddItem(new MenuItem("f5check", "Reload Required Please F5!")).SetFontColor(Color.Fuchsia).Show(false);

@@ -21,7 +21,7 @@ namespace Cloey.Helpers
         private static Dictionary<Unit, Vector3> _lastPositions = new Dictionary<Unit, Vector3>();
         private static Dictionary<Unit, Queue<float>> _lastRotations = new Dictionary<Unit, Queue<float>>();
 
-        // credits @ zynox
+        // credits @ zynox renamed because was ambigious 
         static ZPrediction()
         {
             Game.OnIngameUpdate += Game_OnIngameUpdate;

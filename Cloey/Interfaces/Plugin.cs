@@ -60,9 +60,6 @@ namespace Cloey.Interfaces
                         Drawing.OnDraw += Drawing_OnDraw;
                         cDict["Init"] = true;
                     }
-
-                    Root.TextureName = TextureName;
-                    Root.ShowTextWithTexture = true;
                 }
 
                 // orbwalkers

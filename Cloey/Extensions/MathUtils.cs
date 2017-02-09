@@ -160,15 +160,5 @@ namespace Cloey.Extensions
 
             return default(Vector2);
         }
-
-        public static IEnumerable<Vector3> PredictRoute(this Unit target, int time, Vector3 targetPosition)
-        {
-            bool completed;
-            var path =
-                Pathfinding.CalculateStaticLongPath(target.NetworkPosition, targetPosition,
-                    target.MovementSpeed * time * 4, true, out completed).ToList();
-
-            return !completed ? new List<Vector3> { targetPosition } : path;
-        }
     }
 }

@@ -56,7 +56,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers\ModifierData.cs" />
-    <Compile Include="Helpers\ZPrediction.cs" />
+    <Compile Include="Plugins\Heroes\NagaSiren.cs" />
+    <Compile Include="Prediction\ZPrediction.cs" />
     <Compile Include="Interfaces\Plugin.cs" />
     <Compile Include="Extensions\MathUtils.cs" />
     <Compile Include="Extensions\UnitUtils.cs" />

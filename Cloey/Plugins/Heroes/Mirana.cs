@@ -44,8 +44,8 @@ namespace Cloey.Plugins.Heroes
             cmenu.AddItem(new MenuItem("togglercombo", "Supported Spells: ")).SetFontColor(Color.LimeGreen)
                 .SetValue(new AbilityToggler(ComboSpells.ToDictionary(x => x, x => true)));
             cmenu.AddItem(new MenuItem("chaincc", "Auto Chain Crowd Control")).SetValue(true).SetFontColor(Color.Orange);
-            cmenu.AddItem(new MenuItem("killsteal", "Auto Cast if Lethal")).SetValue(true).SetFontColor(Color.Orange);
-            cmenu.AddItem(new MenuItem("blockks", "Block Auto Cast in Combo")).SetValue(false);
+            cmenu.AddItem(new MenuItem("kss", "Auto Combo if Lethal")).SetValue(true).SetFontColor(Color.Orange);
+            cmenu.AddItem(new MenuItem("blockks", "Block Auto Casts in Combo")).SetValue(false);
             cmenu.AddItem(new MenuItem("twostars", "Starstorm Double Hit Only")).SetValue(false);
             cmenu.AddItem(new MenuItem("combomana", "Minimum Mana % to Use Combo")).SetValue(new Slider(15));
             Menu.AddSubMenu(cmenu);
@@ -434,62 +434,24 @@ namespace Cloey.Plugins.Heroes
 
         internal void Killsteal()
         {
-            if (MiranaArrow.CanBeCasted() && Menu.Item("killsteal").GetValue<bool>() && Utils.SleepCheck("MiranaAutoKS"))
+            if (MiranaStars.CanBeCasted() && Menu.Item("kss").GetValue<bool>() && Utils.SleepCheck("MiranaAutoKS"))
             {
-                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(Root.Item("predictionrange").GetValue<Slider>().Value)))
+                foreach (var hero in ObjectManager.GetEntities<Hero>().Where(x => x.IsValidUnit(650)))
                 {
                     float damage;
 
-                    damage = MiranaArrow.GetDamage(Math.Min(0, MiranaArrow.Level - 1));
+                    damage = MiranaStars.GetDamage(Math.Min(0, MiranaArrow.Level - 1));
                     damage *= Me.GetSpellAmp();
 
-                    if (hero.IsValidUnit() && hero.Health <= damage)
+                    if (hero.Dist(Me.NetworkPosition) <= 450)
                     {
-                        var speed = MiranaArrow.GetAbilityData("arrow_speed");
-                        var radius = MiranaArrow.GetAbilityData("arrow_width") + 35;
+                        damage = damage * 2;
+                    }
 
-                        var distToHero = Me.NetworkPosition.Dist(hero.NetworkPosition);
-                        var distTime = (550 + Game.Ping) + (1000 * (Me.NetworkPosition.Dist(hero.NetworkPosition) / speed));
-
-                        if (Root.Item("prediction").GetValue<StringList>().SelectedValue == "Zynox")
-                        {
-                            var zpredPosition = ZPrediction.PredictPosition(hero, (int) distTime, 
-                                Root.Item("predictionallowturning", true).GetValue<bool>());
-
-                            if (zpredPosition != default(Vector3))
-                            {
-                                List<Unit> units;
-                                if (MathUtils.CountInPath(Me.NetworkPosition, zpredPosition, radius, distToHero, out units, false) <= 1)
-                                {
-                                    MiranaArrow.UseAbility(zpredPosition);
-                                    Utils.Sleep(distTime + 250, "eul" + hero.Handle);
-                                    Utils.Sleep(distTime + Game.Ping, "MiranaAutoKS");
-                                }
-                                else
-                                {
-                                    if (MiranaArrow.IsInAbilityPhase)
-                                    {
-                                        Me.Hold();
-                                        Utils.Sleep(125, "LimitHeroUpdate");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (MiranaArrow.IsInAbilityPhase)
-                                {
-                                    Me.Hold();
-                                    Utils.Sleep(125, "LimitHeroUpdate");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            MiranaArrow.CastSkillShot(hero);
-                            Utils.Sleep(distTime + 250, "eul" + hero.Handle);
-                            Utils.Sleep(distTime + Game.Ping, "MiranaAutoKS");
-                            return;
-                        }
+                    if (hero.IsValidUnitFull() && damage >= hero.Health)
+                    {
+                        MiranaStars.UseAbility();
+                        Utils.Sleep(200, "MiranaAutoKS");
                     }
                 }
 

@@ -150,7 +150,7 @@ namespace Cloey.Interfaces
                 return;
             }
 
-            if (Environment.TickCount - _limiter >= 250) 
+            if (Environment.TickCount - _limiter >= 125) 
             {
                 if (TextureName.Contains("item"))
                 {

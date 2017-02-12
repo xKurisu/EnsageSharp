@@ -440,7 +440,7 @@ namespace Cloey.Plugins.Heroes
                 {
                     float damage;
 
-                    damage = MiranaStars.GetDamage(Math.Min(0, MiranaArrow.Level - 1));
+                    damage = MiranaStars.GetDamage(Math.Min(0, MiranaStars.Level - 1));
                     damage *= Me.GetSpellAmp();
 
                     if (hero.Dist(Me.NetworkPosition) <= 450)

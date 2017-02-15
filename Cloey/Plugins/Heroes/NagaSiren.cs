@@ -4,8 +4,6 @@ using System.Linq;
 using SharpDX;
 
 using Cloey.Extensions;
-using Cloey.Interfaces;
-
 using Ensage;
 
 
@@ -24,8 +22,7 @@ namespace Cloey.Plugins.Heroes.Beta
         internal static int Index;
         public override string PluginName => "Naga Siren";
         public override string TextureName => "npc_dota_hero_naga_siren";
-        public override ClassID ClassId => ClassID.CDOTA_Unit_Hero_Naga_Siren;
-        public override bool IsHeroPlugin => true;
+        public override ClassID Id => ClassID.CDOTA_Unit_Hero_Naga_Siren;
 
         public static Ability MirrorImage;
         public static Dictionary<uint, Squad> NagaSquad = new Dictionary<uint, Squad>();

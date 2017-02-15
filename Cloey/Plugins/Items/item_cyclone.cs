@@ -1,9 +1,7 @@
-﻿using System;
+﻿using Ensage;
+using Ensage.Common;
 using Cloey.Extensions;
 using Cloey.Helpers;
-using Cloey.Interfaces;
-using Ensage;
-using Ensage.Common;
 using SharpDX;
 
 namespace Cloey.Plugins.Items.Offense
@@ -23,7 +21,7 @@ namespace Cloey.Plugins.Items.Offense
                     Modifier m;
                     if (target.IsDisabled(out m))
                     {
-                        var validPos = ZPrediction.PredictDisabledPosition(target, Game.Ping);
+                        var validPos = ZPrediction.PredictDisabledPosition(target, (int) Game.Ping);
                         if (validPos != default(Vector3))
                         {
                             Item.UseAbility(target);

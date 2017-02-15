@@ -38,6 +38,7 @@ namespace Cloey.Extensions
 
         internal static bool IsDisabled(this Unit unit, out Modifier modifier, bool includeInvulnerable = true)
         {
+            modifier = null;
             Modifier invulnerableModifier = null;
 
             var rootModifier = unit.GetModifier(ModifierData.RootModifiers);
@@ -51,22 +52,23 @@ namespace Cloey.Extensions
             if (vulnerableModifier != null)
             {
                 modifier = vulnerableModifier;
-                return true;
             }
 
             if (invulnerableModifier != null)
             {
                 modifier = invulnerableModifier;
-                return true;
             }
 
             if (rootModifier != null)
             {
                 modifier = rootModifier;
+            }
+
+            if (modifier != null && modifier.DieTime - Game.RawGameTime > 0)
+            {
                 return true;
             }
 
-            modifier = null;
             return false;
         }
 

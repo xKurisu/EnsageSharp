@@ -1,4 +1,6 @@
-﻿using Ensage;
+﻿using Cloey.Helpers;
+
+using Ensage;
 using Ensage.Common;
 using Ensage.Common.Extensions;
 using Ensage.Common.Menu;
@@ -7,58 +9,45 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Cloey.Interfaces
+
+namespace Cloey.Plugins
 {
     internal class Plugin
     {
-        #region Virtual Properties
-
         public virtual string PluginName { get; set; }
         public virtual string TextureName { get; set; }
-        public virtual bool IsHeroPlugin { get; set; } = false;
-        public virtual ClassID ClassId { get; set; } = ObjectManager.LocalHero.ClassID;
-
-        public Item Item;
-        public Dictionary<string, bool> cDict = new Dictionary<string, bool>();
-
-        #endregion
-
-        #region Properties
+        public virtual ClassID Id { get; set; } = ObjectManager.LocalHero.ClassID;
 
         public Menu Root { get; private set; }
         public Menu Menu { get; private set; }
-
-        public Menu Parent => Menu.Parent;
         public Hero Me => ObjectManager.LocalHero;
         public Player Player => ObjectManager.LocalPlayer;
+        public Item Item { get; private set; }
 
-        #endregion
-
-        private int _limiter;
+        private int pNow;
+        private PluginType pType;
+        private Dictionary<string, bool> pDict = new Dictionary<string, bool>();
 
         // todo: redo initializer
         public Plugin Init(Menu root, Menu origin)
         {
             try
             {
-
-                if (IsHeroPlugin)
+                if (TextureName.Contains("npc_dota_hero"))
                 {
                     Root = origin;
                     Menu = new Menu(PluginName, TextureName + "main");
 
-                    // todo:
-
+                    pType = PluginType.Hero;
                     SetupSpells();
                     OnLoadPlugin();
                     root.AddSubMenu(Menu);
 
-                    if (!cDict.ContainsKey("Init"))
+                    if (!pDict.ContainsKey("Init"))
                     {
                         Events.OnClose += Events_OnClose;
                         Game.OnIngameUpdate += Game_OnUpdate;
-                        Drawing.OnDraw += Drawing_OnDraw;
-                        cDict["Init"] = true;
+                        pDict["Init"] = true;
                     }
                 }
 
@@ -72,24 +61,22 @@ namespace Cloey.Interfaces
                         Root = origin;
                         Menu = new Menu(PluginName, TextureName + "root");
 
-                        // todo:
-
+                        pType = PluginType.Orbwalker;
                         SetupSpells();
                         OnLoadPlugin();
                         root.AddSubMenu(Menu);
 
-                        if (!cDict.ContainsKey("Init"))
+                        if (!pDict.ContainsKey("Init"))
                         {
                             Events.OnClose += Events_OnClose;
                             Game.OnIngameUpdate += Game_OnUpdate;
-                            Drawing.OnDraw += Drawing_OnDraw;
-                            cDict["Init"] = true;
+                            pDict["Init"] = true;
                         }
                     }
                 }
 
                 // items
-                if (TextureName.ToLower().Contains("item"))
+                if (TextureName.Contains("item"))
                 {
                     Root = origin;
                     var uniqueTexture = TextureName == "item_dagon" ? "item_dagon_5" : TextureName;
@@ -98,18 +85,16 @@ namespace Cloey.Interfaces
                     Menu.AddItem(new MenuItem(TextureName + "enabled", "Enabled: ")).SetValue(true);
                     Menu.AddItem(new MenuItem(TextureName + "mode", "Mode: ")).SetValue(new StringList(new[] { "Combo", "Always" }));
 
-                    // todo:
-
+                    pType = PluginType.Item;
                     SetupSpells();
                     OnLoadPlugin();
                     root.AddSubMenu(Menu);
 
-                    if (!cDict.ContainsKey("Init"))
+                    if (!pDict.ContainsKey("Init"))
                     {
                         Events.OnClose += Events_OnClose;
                         Game.OnIngameUpdate += Game_OnUpdate;
-                        Drawing.OnDraw += Drawing_OnDraw;
-                        cDict["Init"] = true;
+                        pDict["Init"] = true;
                     }
                 }
             }
@@ -123,23 +108,8 @@ namespace Cloey.Interfaces
             return this;
         }
 
-        private void Events_OnClose(object sender, EventArgs e)
-        {
-            OnClose();
-        }
-
-        private void Drawing_OnDraw(EventArgs args)
-        {
-
-        }
-
         private void Game_OnUpdate(EventArgs args)
         {
-            if (!cDict["Init"] || Me == null)
-            {
-                return;
-            }
-
             if (Game.IsPaused || !Game.IsInGame || Game.IsChatOpen)
             {
                 return;
@@ -150,45 +120,45 @@ namespace Cloey.Interfaces
                 return;
             }
 
-            if (Environment.TickCount - _limiter >= 125) 
+            if (Environment.TickCount - pNow >= 0) 
             {
-                if (TextureName.Contains("item"))
+                switch (pType)
                 {
-                    var combo = Root != null && Root.Item("combokey").GetValue<KeyBind>().Active;
-                    if (combo || Menu.Item(TextureName + "mode").GetValue<StringList>().SelectedIndex != 0)
-                    {
-                        var myItems = Me.Inventory.Items;
-                        foreach (var item in myItems.Where(x => x.TextureName.Contains(TextureName)))
+                    case PluginType.Item:
+                        var combo = Root != null && Root.Item("combokey").GetValue<KeyBind>().Active;
+                        if (combo || Menu.Item(TextureName + "mode").GetValue<StringList>().SelectedIndex != 0)
                         {
-                            if (Menu.Item(TextureName + "enabled").GetValue<bool>() && item.CanBeCasted())
+                            var myItems = Me.Inventory.Items;
+                            foreach (var item in myItems.Where(x => x.TextureName.Contains(TextureName)))
                             {
-                                var slot = Me.FindItem(item.TextureName);
-                                if (slot != null)
+                                if (Menu.Item(TextureName + "enabled").GetValue<bool>() && item.CanBeCasted())
                                 {
-                                    Item = slot;
+                                    Item = item;
                                     OnUpdate();
-                                    _limiter = Environment.TickCount;
+                                    pNow = Environment.TickCount;
                                 }
                             }
                         }
-                    }
-                }
-                else
-                {
-                    OnUpdate();
-                    _limiter = Environment.TickCount;
+                        break;
+
+                    case PluginType.Hero:
+                    case PluginType.Orbwalker:
+                        OnUpdate();
+                        pNow = Environment.TickCount;
+                        break;
                 }
             }
         }
 
-        public virtual void OnUpdate()
+        private void Events_OnClose(object sender, EventArgs e)
         {
-
+            OnClose();
         }
 
-        public virtual void OnLoadPlugin()
+        #region Virtual Voids
+        public virtual void OnUpdate()
         {
-
+            
         }
 
         public virtual void SetupSpells()
@@ -200,5 +170,12 @@ namespace Cloey.Interfaces
         {
             
         }
+
+        public virtual void OnLoadPlugin()
+        {
+            
+        }
+
+        #endregion
     }
 }

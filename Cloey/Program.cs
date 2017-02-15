@@ -7,7 +7,7 @@ using System.Reflection.Emit;
 using Ensage;
 using Ensage.Common;
 using Ensage.Common.Menu;
-using Cloey.Interfaces;
+using Cloey.Plugins;
 using SharpDX;
 
 namespace Cloey
@@ -68,8 +68,11 @@ namespace Cloey
             };
 
             predictionRangeItem = new MenuItem("predictionrange", " -> Max Range: ");
-            predictionAllowTurningItem = new MenuItem("predictionallowturning", " -> Ignore Turning/Rotating", true);
-            predictionAllowCancelItem = new MenuItem("predictionallowcancel", "-> Try Cancel Ability");
+            predictionAllowTurningItem = new MenuItem("predictionallowturning2", " -> Ignore Rotating Targets", true);
+            predictionAllowTurningItem.SetTooltip("Ignore targets rotating or juking!");
+
+            predictionAllowCancelItem = new MenuItem("predictionallowcancel", "-> Cancel Abilities");
+            predictionAllowCancelItem.SetTooltip("Cancel abilities for higher precision prediction!");
 
             amenu.AddItem(targetingItem).SetValue(new StringList(new[] { "Mouse", "Quickest Kill" }));
 
@@ -89,7 +92,7 @@ namespace Cloey
 
                 amenu.AddItem(predictionItem).SetValue(new StringList(new[] { "Common", "Zynox" }, 1));
 
-                amenu.AddItem(predictionAllowTurningItem).SetValue(false);
+                amenu.AddItem(predictionAllowTurningItem).SetValue(true);
                 amenu.AddItem(predictionAllowCancelItem).SetValue(true);
                 amenu.AddItem(predictionRangeItem).SetValue(new Slider(1800, 1000, 3000));
 
@@ -141,7 +144,7 @@ namespace Cloey
         {
             try
             {
-                if (Me.Player?.Hero.ClassID != plugin.ClassId)
+                if (Me.Player?.Hero.ClassID != plugin.Id)
                 {
                     return;
                 }

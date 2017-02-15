@@ -75,14 +75,14 @@ namespace Cloey.Helpers
             return !completed ? new List<Vector3> { targetPosition } : path;
         }
 
-        public static Vector3 PredictDisabledPosition(Unit target, float time)
+        public static Vector3 PredictDisabledPosition(Unit target, int time)
         {
             Modifier z;
 
             if (target.IsDisabled(out z))
             {
-                return z.ElapsedTime * 1000 > time  &&
-                      (z.RemainingTime * 1000) + Game.Ping <= time ? target.NetworkPosition : default(Vector3);
+                return (int) (z.Duration * 1000) > time  &&
+                       (int) (z.RemainingTime * 1000) <= time ? target.NetworkPosition : default(Vector3);
             }
 
             return default(Vector3);
@@ -92,16 +92,16 @@ namespace Cloey.Helpers
         {
             var maxDistance = time / 1000.0f * target.MovementSpeed + target.HullRadius;
 
-            if (noTurning && IsRotating(target)) // max distance checking? -> todo: testing
-            {
-                return Vector3.Zero;
-            }
-
             Modifier z;
             if (target.IsDisabled(out z))
             {
-                return z.ElapsedTime * 1000 > time && 
-                       z.RemainingTime * 1000 + Game.Ping <= time ? target.NetworkPosition : Vector3.Zero;
+                return z.ElapsedTime * 1000 > time &&
+                       (z.RemainingTime * 1000) + Game.Ping <= time ? target.NetworkPosition : Vector3.Zero;
+            }
+
+            if (noTurning && IsRotating(target)) // max distance checking? -> todo: testing
+            {
+                return Vector3.Zero;
             }
 
             if (!target.IsMoving)

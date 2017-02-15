@@ -9,7 +9,7 @@
     using Ensage.Common.Extensions;
     using Ensage.Common.Extensions.SharpDX;
     using Ensage.Common.Menu;
-    using Cloey.Interfaces;
+
 
     using orb = Ensage.Common.Objects.UtilityObjects.Orbwalker;
 
@@ -22,7 +22,7 @@
 
         public override string PluginName => "Orbwalker";
         public override string TextureName => "moones";
-        public override ClassID ClassId => ObjectManager.LocalHero.ClassID;
+        public override ClassID Id => ObjectManager.LocalHero.ClassID;
 
         #endregion
 

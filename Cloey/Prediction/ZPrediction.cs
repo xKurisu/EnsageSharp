@@ -95,8 +95,8 @@ namespace Cloey.Helpers
             Modifier z;
             if (target.IsDisabled(out z))
             {
-                return z.ElapsedTime * 1000 > time &&
-                       (z.RemainingTime * 1000) + Game.Ping <= time ? target.NetworkPosition : Vector3.Zero;
+                return (int) (z.Duration * 1000) > time &&
+                       (int) (z.RemainingTime * 1000) <= time ? target.NetworkPosition : default(Vector3);
             }
 
             if (noTurning && IsRotating(target)) // max distance checking? -> todo: testing
